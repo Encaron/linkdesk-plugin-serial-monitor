@@ -1,31 +1,37 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-14T02:36:36.417Z",
+  "updatedAt": "2026-09-14T18:09:51.633Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.9",
+      "version": "1.0.10",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.9/resources/icon-bar.svg",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.9/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.9/serial-monitor.linkdesk-plugin",
-      "size": 558776,
-      "publishedAt": "2026-09-14T02:36:36.417Z",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.10/resources/icon-bar.svg",
+      "iconSource": "url",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.10/resources/icon.svg",
+      "marketIconSource": "url",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.10/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.10/serial-monitor.linkdesk-plugin",
+      "size": 559879,
+      "publishedAt": "2026-09-14T18:09:51.633Z",
       "versions": [
+        {
+          "version": "1.0.10",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.10/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-09-14T18:09:51.633Z",
+          "changelog": "- **分发件补上 MIT LICENSE**：`LICENSE` 早就在本仓里（E6#108g 那批加的），但**已发布的那版产物比它早** ⇒ 用户手上那份 zip 里一直没有版权声明。MIT 要求「副本里带声明」，而 zip 才是用户真正拿到的那份\n- **不再夹带仓库面文件**：`@linkdesk/plugin-sdk` 升到 0.1.19（^0.1.14 → ^0.1.19）——旧 SDK 的打包通道会把 `marketplace.json` / `scripts/ci-verify.mjs` / `AGENTS.md` 这类**仓库面文件**一起装进 zip（那是给仓库看的，不是给用户看的），0.1.19 的排除表已覆盖\n- 无功能变化——本版只为让「用户拿到的产物」与仓库对齐"
+        },
         {
           "version": "1.0.9",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.9/serial-monitor.linkdesk-plugin",
           "publishedAt": "2026-09-14T02:36:36.417Z",
           "changelog": "- 源码迁入独立仓（E6#99，L7 第 7.2 轮）——从壳仓 `Encaron/linkdesk` 抽出本插件子树，历史全保（hash 变）\n- 随包 `plugin.json` 显式声明 `pluginId`（E6#98g）：插件身份不再靠目录名兜底，独立仓构建出的包名与身份稳定\n- `$schema` 改指本仓 `node_modules/@linkdesk/plugin-sdk`（脱离壳仓后原相对路径指到仓外，编辑器补全/校验会失效）"
         }
-      ],
-      "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.9/resources/icon.svg",
-      "marketIconSource": "url"
+      ]
     }
   ]
 }
