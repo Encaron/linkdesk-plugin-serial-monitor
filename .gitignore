@@ -1,0 +1,11 @@
+# 独立构建产物——不入库（照抄壳仓根 .gitignore 的对应条目）
+node_modules/
+dist/
+*.linkdesk-plugin
+*.tgz
+*.log
+tsconfig.tsbuildinfo
+
+# 本机工具文件
+.DS_Store
+Thumbs.db
