@@ -29,28 +29,28 @@ export default function ReceiveArea(p: ReceiveAreaProps) {
     <>
       {/* 系统消息区 */}
       {p.separateSystemLog && p.systemLog.length > 0 && (
-        <div className="system-log-area">
+        <div className="serial-monitor-system-log-area">
           {p.systemLog.slice(-2).map((msg, i) => (
-            <div key={i} className="system-log-line">{msg}</div>
+            <div key={i} className="serial-monitor-system-log-line">{msg}</div>
           ))}
         </div>
       )}
 
-      {/* CM6 接收区——E5.8#30.19a：双栏开关 → 并排 HEX/ASCII 两栏（.cm-pane 常驻挂载，CSS 显隐） */}
-      <div className={`cm-wrapper${p.hexAsciiDualPane ? " dual" : ""}`}>
-        <div className="cm-pane">
-          <div ref={p.cmContainer} className="cm-container" />
+      {/* CM6 接收区——E5.8#30.19a：双栏开关 → 并排 HEX/ASCII 两栏（.serial-monitor-cm-pane 常驻挂载，CSS 显隐） */}
+      <div className={`serial-monitor-cm-wrapper${p.hexAsciiDualPane ? " dual" : ""}`}>
+        <div className="serial-monitor-cm-pane">
+          <div ref={p.cmContainer} className="serial-monitor-cm-container" />
         </div>
-        <div className="cm-pane cm-hex-pane">
-          <div ref={p.hexContainer} className="cm-container" />
+        <div className="serial-monitor-cm-pane serial-monitor-cm-hex-pane">
+          <div ref={p.hexContainer} className="serial-monitor-cm-container" />
         </div>
         {p.paused && (
-          <div className="paused-banner">
+          <div className="serial-monitor-paused-banner">
             {t("⏸ 已暂停 · {{count}} 条缓冲", { count: p.pausedCount })}
           </div>
         )}
         {p.showBackToBottom && (
-          <button className="back-to-bottom" onClick={p.onBackToBottom}>
+          <button className="serial-monitor-back-to-bottom" onClick={p.onBackToBottom}>
             ↓
           </button>
         )}

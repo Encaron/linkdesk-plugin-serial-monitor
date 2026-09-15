@@ -77,7 +77,7 @@
   flex-wrap: wrap;
 }
 
-.toolbar-btn {
+.serial-monitor-toolbar-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -85,7 +85,7 @@
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text-secondary);
-  font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：toolbar-btn 12→sm */
+  font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：serial-monitor-toolbar-btn 12→sm */
   padding: 3px 10px;
   cursor: pointer;
   transition: background 150ms, color 150ms;
@@ -94,41 +94,41 @@
   flex-shrink: 0;
 }
 
-.toolbar-btn:hover {
+.serial-monitor-toolbar-btn:hover {
   background: var(--hover-overlay);
   color: var(--text-primary);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary) 8%, transparent); /* E5.8#128.8：rgba 硬编码 → 文字色 8% 合成 */
 }
 
-.toolbar-btn:focus-visible {
+.serial-monitor-toolbar-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
 
-.toolbar-btn.active {
+.serial-monitor-toolbar-btn.active {
   background: var(--accent);
   color: var(--text-primary);
   border-color: var(--accent);
 }
 
 /* E5.8#30.12（P6）：接收区工具栏 per-tab TX/RX 计数——margin-left:auto 推到最右 */
-.receive-stats {
+.serial-monitor-receive-stats {
   margin-left: auto;
   align-self: center;
-  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：receive-stats 11→xs */
+  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：serial-monitor-receive-stats 11→xs */
   font-family: 'Sarasa Mono SC', Consolas, 'Courier New', monospace;
   color: var(--text-secondary);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.receive-stats.muted {
+.serial-monitor-receive-stats.muted {
   color: var(--text-muted);
 }
 
 /* === 搜索条 === */
 
-.search-bar {
+.serial-monitor-search-bar {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -138,66 +138,66 @@
   flex-shrink: 0;
 }
 
-.search-icon {
+.serial-monitor-search-icon {
   color: var(--text-muted);
   font-size: var(--font-size-lg); /* E5.8 Phase 12 #176：搜索 codicon 内容图标（基类 16px）→lg */
   flex-shrink: 0;
 }
 
-.search-input {
+.serial-monitor-search-input {
   flex: 1;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 3px 8px;
   color: var(--text-primary);
-  font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：search-input 12→sm */
+  font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：serial-monitor-search-input 12→sm */
   font-family: 'Sarasa Mono SC', Consolas, 'Courier New', monospace;
   outline: none;
   min-width: 120px;
 }
 
-.search-input:focus {
+.serial-monitor-search-input:focus {
   border-color: var(--accent);
 }
 
-.search-input:focus-visible {
+.serial-monitor-search-input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
 
-.search-count {
+.serial-monitor-search-count {
   color: var(--text-secondary);
-  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：search-count 11→xs */
+  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：serial-monitor-search-count 11→xs */
   white-space: nowrap;
   flex-shrink: 0;
   min-width: 36px;
   text-align: center;
 }
 
-.search-opt {
+.serial-monitor-search-opt {
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 3px;
   color: var(--text-secondary);
-  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：search-opt 11→xs */
+  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：serial-monitor-search-opt 11→xs */
   font-weight: 600;
   padding: 2px 6px;
   cursor: pointer;
   transition: background 100ms, color 100ms;
 }
 
-.search-opt:hover {
+.serial-monitor-search-opt:hover {
   background: color-mix(in srgb, var(--text-primary) 8%, transparent); /* E5.8#128.8：rgba → 文字色 8% 合成 */
 }
 
-.search-opt.active {
+.serial-monitor-search-opt.active {
   background: var(--accent);
   color: var(--text-on-accent); /* E5.8#128.8：white 关键词硬编码 → text-on-accent token */
   border-color: var(--accent);
 }
 
-.search-nav {
+.serial-monitor-search-nav {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -205,35 +205,35 @@
   border: 1px solid var(--border);
   border-radius: 3px;
   color: var(--text-secondary);
-  font-size: var(--font-size-lg); /* E5.8 Phase 12 #176：search-nav icon-only codicon（基类 16px）→lg */
+  font-size: var(--font-size-lg); /* E5.8 Phase 12 #176：serial-monitor-search-nav icon-only codicon（基类 16px）→lg */
   padding: 3px 6px;
   cursor: pointer;
   transition: background 100ms;
 }
 
-.search-nav:hover {
+.serial-monitor-search-nav:hover {
   background: color-mix(in srgb, var(--text-primary) 8%, transparent); /* E5.8#128.8：rgba → 文字色 8% 合成 */
 }
 
-.search-close {
+.serial-monitor-search-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: var(--font-size-lg); /* E5.8 Phase 12 #176：search-close icon-only codicon（基类 16px）→lg */
+  font-size: var(--font-size-lg); /* E5.8 Phase 12 #176：serial-monitor-search-close icon-only codicon（基类 16px）→lg */
   cursor: pointer;
   padding: 2px 4px;
 }
 
-.search-close:hover {
+.serial-monitor-search-close:hover {
   color: var(--text-primary);
 }
 
 /* === 关键字过滤输入 === */
 
-.filter-keyword-input {
+.serial-monitor-filter-keyword-input {
   height: calc(24px * var(--ui-scale)); /* E5.8 Phase 12 #176：输入框 24px 乘 scale（§三.3） */
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：12→sm */
 }

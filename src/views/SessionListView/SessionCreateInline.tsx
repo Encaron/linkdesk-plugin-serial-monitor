@@ -17,10 +17,10 @@ export interface SessionCreateInlineProps {
 export function SessionCreateInline({ inputRef, value, onChange, onConfirm, onCancel }: SessionCreateInlineProps) {
   const { t } = useTranslation();
   return (
-    <div className="session-create-inline">
+    <div className="serial-monitor-session-create-inline">
       <input
         ref={inputRef}
-        className="session-create-input"
+        className="serial-monitor-session-create-input"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
@@ -29,8 +29,8 @@ export function SessionCreateInline({ inputRef, value, onChange, onConfirm, onCa
         }}
         placeholder={t("新会话名称：") ?? ""}
       />
-      <button className="session-create-ok" onMouseDown={(e) => { e.preventDefault(); onConfirm(); }} title={t("确定")}><span className="codicon codicon-check" /></button>
-      <button className="session-create-cancel" onMouseDown={(e) => { e.preventDefault(); onCancel(); }} title={t("取消")}><span className="codicon codicon-close" /></button>
+      <button className="serial-monitor-session-create-ok" onMouseDown={(e) => { e.preventDefault(); onConfirm(); }} title={t("确定")}><span className="codicon codicon-check" /></button>
+      <button className="serial-monitor-session-create-cancel" onMouseDown={(e) => { e.preventDefault(); onCancel(); }} title={t("取消")}><span className="codicon codicon-close" /></button>
     </div>
   );
 }

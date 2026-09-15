@@ -22,18 +22,18 @@ export default function SenderArea(p: SenderAreaProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="sender-area">
+    <div className="serial-monitor-sender-area">
       {p.hexWarning && (
-        <div className="hex-warning">{p.hexWarning}</div>
+        <div className="serial-monitor-hex-warning">{p.hexWarning}</div>
       )}
-      <div className="send-editor-wrapper">
-        <span className="send-editor-prefix">→</span>
-        <div ref={p.sendEditorContainer} className="send-editor-cm" />
+      <div className="serial-monitor-send-editor-wrapper">
+        <span className="serial-monitor-send-editor-prefix">→</span>
+        <div ref={p.sendEditorContainer} className="serial-monitor-send-editor-cm" />
       </div>
-      <div className="sender-actions">
-        <div className="history-wrapper">
+      <div className="serial-monitor-sender-actions">
+        <div className="serial-monitor-history-wrapper">
           <button
-            className={`toolbar-btn${p.showHistory ? " active" : ""}`}
+            className={`serial-monitor-toolbar-btn${p.showHistory ? " active" : ""}`}
             onClick={() => p.setShowHistory(!p.showHistory)}
             title={t("发送历史")}
             disabled={p.sendHistory.length === 0}
@@ -41,11 +41,11 @@ export default function SenderArea(p: SenderAreaProps) {
             ▼
           </button>
           {p.showHistory && p.sendHistory.length > 0 && (
-            <div className="history-dropdown">
+            <div className="serial-monitor-history-dropdown">
               {p.sendHistory.map((h, i) => (
                 <div
                   key={i}
-                  className="history-item"
+                  className="serial-monitor-history-item"
                   onClick={() => p.onHistorySelect(h)}
                 >
                   {h}
@@ -54,10 +54,10 @@ export default function SenderArea(p: SenderAreaProps) {
             </div>
           )}
         </div>
-        <button className="toolbar-btn" onClick={p.onClearSend}>
+        <button className="serial-monitor-toolbar-btn" onClick={p.onClearSend}>
           {t("清空发送区")}
         </button>
-        <button className="send-btn" onClick={p.onSend}>
+        <button className="serial-monitor-send-btn" onClick={p.onSend}>
           {t("发送")}
         </button>
       </div>

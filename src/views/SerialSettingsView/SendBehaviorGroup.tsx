@@ -17,8 +17,8 @@ export function SendBehaviorGroup({ api, session }: SendBehaviorGroupProps) {
   const { t } = useTranslation();
   const { mkSelect, mkToggle, mkSetter } = api;
   return (
-    <div className="setting-group">
-      <div className="setting-section-label">{t("发送行为")}</div>
+    <div className="setting-group serial-monitor-setting-group">
+      <div className="serial-monitor-setting-section-label">{t("发送行为")}</div>
       <FormRow label={t("换行符")}>
         {mkSelect("lineEnding", LINE_ENDINGS)}
       </FormRow>

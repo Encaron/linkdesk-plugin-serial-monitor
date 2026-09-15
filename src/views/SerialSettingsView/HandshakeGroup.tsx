@@ -17,8 +17,8 @@ export interface HandshakeGroupProps {
 export function HandshakeGroup({ session, onHandshakeChange }: HandshakeGroupProps) {
   const { t } = useTranslation();
   return (
-    <div className="setting-group">
-      <div className="setting-section-label">{t("握手信号")}</div>
+    <div className="setting-group serial-monitor-setting-group">
+      <div className="serial-monitor-setting-section-label">{t("握手信号")}</div>
       <FormRow label="DTR">
         <Toggle checked={Boolean(session.dtr)} onChange={(v) => onHandshakeChange("dtr", v)} />
       </FormRow>

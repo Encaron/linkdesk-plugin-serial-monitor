@@ -29,11 +29,11 @@ export default function QuickSendBar(p: QuickSendBarProps) {
   return (
     <>
       {/* 快捷发送条 */}
-      <div className="quick-send-bar">
+      <div className="serial-monitor-quick-send-bar">
         {Object.entries(p.quickSends).map(([name, content]) => (
           <button
             key={name}
-            className="quick-send-pill"
+            className="serial-monitor-quick-send-pill"
             onClick={() => p.onQuickSend(content)}
             onContextMenu={(e) => p.onCtxMenu(name, e)}
             title={content}
@@ -42,26 +42,26 @@ export default function QuickSendBar(p: QuickSendBarProps) {
           </button>
         ))}
         {p.qsAdding ? (
-          <div className="quick-send-add-form">
+          <div className="serial-monitor-quick-send-add-form">
             <input
-              className="input qs-input"
+              className="input serial-monitor-qs-input"
               placeholder={t("名称")}
               value={p.qsName}
               onChange={(e) => p.setQsName(e.target.value)}
               autoFocus
             />
             <input
-              className="input qs-input"
+              className="input serial-monitor-qs-input"
               placeholder={t("发送内容")}
               value={p.qsContent}
               onChange={(e) => p.setQsContent(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") p.onSave(); if (e.key === "Escape") { p.setQsAdding(false); p.setQsEditing(null); } }}
             />
-            <button className="toolbar-btn" onClick={p.onSave}>{p.qsEditing ? <span className="codicon codicon-edit" /> : <span className="codicon codicon-check" />}</button>
-            <button className="toolbar-btn" onClick={() => { p.setQsAdding(false); p.setQsEditing(null); }}><span className="codicon codicon-close" /></button>
+            <button className="serial-monitor-toolbar-btn" onClick={p.onSave}>{p.qsEditing ? <span className="codicon codicon-edit" /> : <span className="codicon codicon-check" />}</button>
+            <button className="serial-monitor-toolbar-btn" onClick={() => { p.setQsAdding(false); p.setQsEditing(null); }}><span className="codicon codicon-close" /></button>
           </div>
         ) : (
-          <button className="quick-send-add" title={t("添加快捷发送")} onClick={() => p.setQsAdding(true)}>
+          <button className="serial-monitor-quick-send-add" title={t("添加快捷发送")} onClick={() => p.setQsAdding(true)}>
             + {t("添加")}
           </button>
         )}

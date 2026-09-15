@@ -21,9 +21,9 @@ function ControlPanel({ sourceId }: { sourceId?: string }) {
   const p = useControlPanel(sourceId);
 
   return (
-    <div className="control-bar">
+    <div className="serial-monitor-control-bar">
       {/* 连接状态点 */}
-      <span className={`control-dot${p.connected ? " on" : ""}`} />
+      <span className={`serial-monitor-control-dot${p.connected ? " on" : ""}`} />
 
       {/* COM 口下拉框——打开时自动刷新端口列表（USB 热插拔即时更新） */}
       <PortSelect
@@ -34,11 +34,11 @@ function ControlPanel({ sourceId }: { sourceId?: string }) {
         onOpen={p.refreshPorts}
       />
 
-      <span className="control-sep" />
+      <span className="serial-monitor-control-sep" />
 
       <BaudInput value={p.baudRate} onChange={p.handleBaudChange} />
 
-      <span className="control-sep" />
+      <span className="serial-monitor-control-sep" />
 
       <FrameSelects
         frameFormat={p.frameFormat}
@@ -48,11 +48,11 @@ function ControlPanel({ sourceId }: { sourceId?: string }) {
         onParityChange={p.handleParityChange}
       />
 
-      <span className="control-spacer" />
+      <span className="serial-monitor-control-spacer" />
 
       {/* 连接/断开按钮 */}
       <button
-        className={`control-connect-btn${p.connected ? " connected" : ""}`}
+        className={`serial-monitor-control-connect-btn${p.connected ? " connected" : ""}`}
         onClick={p.handleToggleOpen}
         disabled={!p.hasSession}
       >

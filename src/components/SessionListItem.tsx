@@ -70,12 +70,12 @@ export function SessionListItem({
 
   return (
     <div
-      className={`session-item${isActive ? " active" : ""}`}
+      className={`serial-monitor-session-item${isActive ? " active" : ""}`}
       style={{ "--session-color": session.color } as React.CSSProperties}
       onMouseDown={onSelect}
     >
       {/* 连接状态点——C4b Bug 3：从 SerialContext 派生，非 session.connected */}
-      <span className={`session-dot${connected ? " on" : ""}`} />
+      <span className={`serial-monitor-session-dot${connected ? " on" : ""}`} />
 
       {/* 名称 / E5#19b 内联编辑——InlineInput 归一化 */}
       {editing ? (
@@ -90,20 +90,20 @@ export function SessionListItem({
               autoFocus
             />
           </span>
-          <button className="session-create-ok" onMouseDown={(e) => { e.preventDefault(); commitRename(); }} title={t("确定")}><span className="codicon codicon-check" /></button>
-          <button className="session-create-cancel" onMouseDown={(e) => { e.preventDefault(); handleRenameCancel(); }} title={t("取消")}><span className="codicon codicon-close" /></button>
+          <button className="serial-monitor-session-create-ok" onMouseDown={(e) => { e.preventDefault(); commitRename(); }} title={t("确定")}><span className="codicon codicon-check" /></button>
+          <button className="serial-monitor-session-create-cancel" onMouseDown={(e) => { e.preventDefault(); handleRenameCancel(); }} title={t("取消")}><span className="codicon codicon-close" /></button>
         </>
       ) : (
         <>
-          <div className="session-item-info" onDoubleClick={handleDoubleClick}>
-            <span className="session-item-name">{session.name}</span>
-            <span className="session-item-subtitle">{subtitle}</span>
+          <div className="serial-monitor-session-item-info" onDoubleClick={handleDoubleClick}>
+            <span className="serial-monitor-session-item-name">{session.name}</span>
+            <span className="serial-monitor-session-item-subtitle">{subtitle}</span>
           </div>
 
           {/* hover 时出现的操作按钮 */}
-          <span className="session-item-actions">
+          <span className="serial-monitor-session-item-actions">
             <button
-              className="session-action-btn"
+              className="serial-monitor-session-action-btn"
               title={t("改名")}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
@@ -114,7 +114,7 @@ export function SessionListItem({
               <span className="codicon codicon-edit" />
             </button>
             <button
-              className="session-action-btn"
+              className="serial-monitor-session-action-btn"
               title={t("关闭会话")}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {

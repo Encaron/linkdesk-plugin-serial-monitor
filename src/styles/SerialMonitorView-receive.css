@@ -7,7 +7,7 @@
 
 /* === 系统消息区域（对标 V2 lbSystemLog：固定两行 36px + accent 左边框） === */
 
-.system-log-area {
+.serial-monitor-system-log-area {
   height: calc(36px * var(--ui-scale)); /* E5.8 Phase 12 #176：两行系统消息区乘 scale（§三.3 文字行容器） */
   min-height: calc(18px * var(--ui-scale));
   max-height: calc(72px * var(--ui-scale));
@@ -22,8 +22,8 @@
   transition: opacity 200ms ease;
 }
 
-.system-log-line {
-  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：system-log-line 11→xs */
+.serial-monitor-system-log-line {
+  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：serial-monitor-system-log-line 11→xs */
   font-family: 'Sarasa Mono SC', Consolas, 'Courier New', monospace;
   color: var(--system-log);
   line-height: 1.4;
@@ -35,49 +35,49 @@
 
 /* === CM6 接收区 === */
 
-.cm-wrapper {
+.serial-monitor-cm-wrapper {
   flex: 1;
   overflow: hidden;
   position: relative;
 }
 
 /* E5.8#30.19a：HEX+ASCII 双栏——两 CM6 并排，同一 monospace 字号/行高 → ASCII/HEX 逐行对齐对照 */
-.cm-wrapper.dual {
+.serial-monitor-cm-wrapper.dual {
   display: flex;
 }
-.cm-pane {
+.serial-monitor-cm-pane {
   height: 100%;
   min-width: 0;
   overflow: hidden;
 }
-.cm-wrapper.dual .cm-pane {
+.serial-monitor-cm-wrapper.dual .serial-monitor-cm-pane {
   flex: 1;
 }
-.cm-hex-pane {
+.serial-monitor-cm-hex-pane {
   display: none;
 }
-.cm-wrapper.dual .cm-hex-pane {
+.serial-monitor-cm-wrapper.dual .serial-monitor-cm-hex-pane {
   display: block;
   border-left: 1px solid var(--separator);
 }
 
-.cm-container {
+.serial-monitor-cm-container {
   height: 100%;
   overflow: hidden;
 }
 
-.cm-container .cm-editor {
+.serial-monitor-cm-container .cm-editor {
   height: 100%;
 }
 
-.cm-container .cm-scroller {
+.serial-monitor-cm-container .cm-scroller {
   overflow: auto;
   font-family: 'Sarasa Mono SC', Consolas, 'Courier New', monospace;
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：CM6 接收区 12→sm（§六.2 随全局） */
 }
 
 /* 暂停横幅 */
-.paused-banner {
+.serial-monitor-paused-banner {
   position: absolute;
   top: 0;
   left: 0;
@@ -85,26 +85,26 @@
   padding: 4px 10px;
   background: var(--warning-bg);
   color: var(--warning-text);
-  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：paused-banner 11→xs */
+  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：serial-monitor-paused-banner 11→xs */
   text-align: center;
-  animation: slideDown 200ms ease;
+  animation: serial-monitor-slideDown 200ms ease;
   z-index: var(--z-sticky);
 }
 
-@keyframes slideDown {
+@keyframes serial-monitor-slideDown {
   from { transform: translateY(-100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
 /* === CM6 原生搜索面板 === */
 
-.cm-panels {
+.serial-monitor-cm-container .cm-panels {
   background: var(--bg-card);
   border-bottom: 1px solid var(--separator);
 }
 
-.cm-panels input[type="text"],
-.cm-panels .cm-textfield input {
+.serial-monitor-cm-container .cm-panels input[type="text"],
+.serial-monitor-cm-container .cm-panels .cm-textfield input {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -113,33 +113,33 @@
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：CM6 搜索面板 12→sm */
   outline: none;
 }
-.cm-panels input[type="text"]:focus {
+.serial-monitor-cm-container .cm-panels input[type="text"]:focus {
   border-color: var(--accent);
 }
 
-.cm-panels button {
+.serial-monitor-cm-container .cm-panels button {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text-secondary);
   cursor: pointer;
 }
-.cm-panels button:hover {
+.serial-monitor-cm-container .cm-panels button:hover {
   background: color-mix(in srgb, var(--text-primary) 8%, transparent); /* E5.8#128.8：rgba → 文字色 8% 合成 */
   color: var(--text-primary);
 }
 
-.cm-panels label {
+.serial-monitor-cm-container .cm-panels label {
   color: var(--text-secondary);
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：cm-panels label 12→sm */
 }
-.cm-panels input[type="checkbox"] {
+.serial-monitor-cm-container .cm-panels input[type="checkbox"] {
   accent-color: var(--accent);
 }
 
 
 /* "↓ 回到底部" 浮动按钮 */
-.back-to-bottom {
+.serial-monitor-back-to-bottom {
   position: absolute;
   bottom: 12px;
   right: 12px;
@@ -153,11 +153,11 @@
   cursor: pointer;
   box-shadow: var(--shadow-tooltip); /* E5.8#128.8：0 2px 8px rgba(0,0,0,0.3) == shadow-tooltip 真值 */
   transition: opacity 150ms;
-  animation: fadeIn 150ms ease;
+  animation: serial-monitor-fadeIn 150ms ease;
   z-index: var(--z-sticky);
 }
 
-@keyframes fadeIn {
+@keyframes serial-monitor-fadeIn {
   from { opacity: 0; transform: scale(0.8); }
   to { opacity: 1; transform: scale(1); }
 }

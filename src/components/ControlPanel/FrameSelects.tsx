@@ -28,7 +28,7 @@ export function FrameSelects({
         options={FRAME_FORMATS}
         onChange={onFrameChange}
         title={`${t("数据位")}/${t("停止位")}`}
-        className="control-select-narrow"
+        className="serial-monitor-control-select-narrow"
       />
 
       {/* 校验位——独立选择器（E5.8#30.17）：无/奇/偶 */}

@@ -13,11 +13,11 @@
 
 /* ── 命令条容器 ── */
 
-.control-bar {
+.serial-monitor-control-bar {
   display: flex;
   align-items: center;
   gap: 4px;
-  height: calc(36px * var(--ui-scale)); /* E5.8 Phase 12 #176：control-bar 36px 乘 scale（§三.3） */
+  height: calc(36px * var(--ui-scale)); /* E5.8 Phase 12 #176：serial-monitor-control-bar 36px 乘 scale（§三.3） */
   padding: 0 8px;
   background: var(--bg-window); /* E5.8#128.8：幽灵 --bg-base → 真实 bg-window */
   border-bottom: 1px solid var(--separator);
@@ -26,7 +26,7 @@
 
 /* ── 连接状态点 ── */
 
-.control-dot {
+.serial-monitor-control-dot {
   width: calc(8px * var(--ui-scale)); /* E5.8 Phase 12 #176：状态点 8px 乘 scale */
   height: calc(8px * var(--ui-scale));
   border-radius: 50%;
@@ -36,14 +36,14 @@
   transition: background 300ms ease, box-shadow 300ms ease;
 }
 
-.control-dot.on {
+.serial-monitor-control-dot.on {
   background: var(--serial-monitor-ok);
   box-shadow: 0 0 6px var(--serial-monitor-ok);
 }
 
 /* ── SelectBox 在命令条内——加可感知的交互感 ── */
 
-.control-bar .ldk-selectbox-trigger {
+.serial-monitor-control-bar .ldk-selectbox-trigger {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -53,11 +53,11 @@
 
 /* ── E5.8#30.17：Combobox 在命令条内——与 SelectBox 同视觉密度 ── */
 
-.control-bar .ldk-combobox {
+.serial-monitor-control-bar .ldk-combobox {
   min-width: 86px;
 }
 
-.control-bar .ldk-combobox-field {
+.serial-monitor-control-bar .ldk-combobox-field {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -65,19 +65,19 @@
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：combobox-field 12→sm */
 }
 
-.control-bar .ldk-combobox-input {
+.serial-monitor-control-bar .ldk-combobox-input {
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：combobox-input 12→sm */
 }
 
 /* ── E5.8#30.17：8N1 窄下拉（只放 4 个组合）── */
 
-.control-bar .control-select-narrow {
+.serial-monitor-control-bar .serial-monitor-control-select-narrow {
   min-width: 64px;
 }
 
 /* ── 1px 竖线分隔 ── */
 
-.control-sep {
+.serial-monitor-control-sep {
   width: 1px;
   height: calc(18px * var(--ui-scale)); /* E5.8 Phase 12 #176：竖分隔随文字行高乘 scale */
 
@@ -88,14 +88,14 @@
 
 /* ── 弹性空白——把右侧按钮推到最右 ── */
 
-.control-spacer {
+.serial-monitor-control-spacer {
   flex: 1;
   min-width: 4px;
 }
 
 /* ── 连接/断开按钮 ── */
 
-.control-connect-btn {
+.serial-monitor-control-connect-btn {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -111,28 +111,28 @@
   flex-shrink: 0;
 }
 
-.control-connect-btn:hover {
+.serial-monitor-control-connect-btn:hover {
   background: var(--hover-overlay);
   color: var(--text-primary);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary) 8%, transparent); /* E5.8#128.8：rgba 硬编码 → 文字色 8% 合成（主题感知） */
 }
 
-.control-connect-btn:focus-visible {
+.serial-monitor-control-connect-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
 
-.control-connect-btn:disabled {
+.serial-monitor-control-connect-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.control-connect-btn.connected {
+.serial-monitor-control-connect-btn.connected {
   border-color: var(--serial-monitor-ok);
   color: var(--serial-monitor-ok);
 }
 
-.control-connect-btn.connected:hover {
+.serial-monitor-control-connect-btn.connected:hover {
   border-color: var(--danger);
   color: var(--danger);
 }

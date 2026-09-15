@@ -25,7 +25,7 @@
 
 /* ── 会话列表项 ── */
 
-.session-item {
+.serial-monitor-session-item {
   display: flex;
   align-items: center;
   padding: 6px 8px 6px 6px; /* 左侧留 2px 给色条 */
@@ -35,18 +35,18 @@
   transition: background 100ms ease;
 }
 
-.session-item:hover {
+.serial-monitor-session-item:hover {
   background: color-mix(in srgb, var(--text-primary) 3%, transparent); /* E5.8#128.8：rgba 硬编码 → 文字色 3% 合成（主题感知） */
 }
 
-.session-item.active {
+.serial-monitor-session-item.active {
   background: color-mix(in srgb, var(--text-primary) 4%, transparent);
   border-left-color: var(--session-color);
 }
 
 /* ── 连接状态点 ── */
 
-.session-dot {
+.serial-monitor-session-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -56,14 +56,14 @@
   transition: background 300ms ease;
 }
 
-.session-dot.on {
+.serial-monitor-session-dot.on {
   background: var(--serial-monitor-ok);
   box-shadow: 0 0 4px var(--serial-monitor-ok);
 }
 
 /* ── 会话信息（名称 + 副标题） ── */
 
-.session-item-info {
+.serial-monitor-session-item-info {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -71,8 +71,8 @@
   gap: 1px;
 }
 
-.session-item-name {
-  font-size: var(--font-size-md); /* E5.8 Phase 12 #176：session-item-name 13→md */
+.serial-monitor-session-item-name {
+  font-size: var(--font-size-md); /* E5.8 Phase 12 #176：serial-monitor-session-item-name 13→md */
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -80,13 +80,13 @@
   line-height: 1.4;
 }
 
-.session-item.active .session-item-name {
+.serial-monitor-session-item.active .serial-monitor-session-item-name {
   color: var(--text-primary);
   font-weight: 600;
 }
 
-.session-item-subtitle {
-  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：session-item-subtitle 11→xs */
+.serial-monitor-session-item-subtitle {
+  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：serial-monitor-session-item-subtitle 11→xs */
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -96,7 +96,7 @@
 
 /* ── Hover 操作按钮 ── */
 
-.session-item-actions {
+.serial-monitor-session-item-actions {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -105,12 +105,12 @@
   transition: opacity 100ms ease;
 }
 
-.session-item:hover .session-item-actions,
-.session-item:focus-within .session-item-actions {
+.serial-monitor-session-item:hover .serial-monitor-session-item-actions,
+.serial-monitor-session-item:focus-within .serial-monitor-session-item-actions {
   opacity: 1;
 }
 
-.session-action-btn {
+.serial-monitor-session-action-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -122,12 +122,12 @@
   transition: background 100ms, color 100ms;
 }
 
-.session-action-btn:hover {
+.serial-monitor-session-action-btn:hover {
   background: color-mix(in srgb, var(--text-primary) 8%, transparent); /* E5.8#128.8：rgba → 文字色 8% 合成 */
   color: var(--text-primary);
 }
 
-.session-action-btn:focus-visible {
+.serial-monitor-session-action-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
@@ -136,7 +136,7 @@
 
 /* ── 新建会话按钮 ── */
 
-.session-create-btn {
+.serial-monitor-session-create-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -150,21 +150,21 @@
   transition: background 100ms, color 100ms;
 }
 
-.session-create-btn:hover {
+.serial-monitor-session-create-btn:hover {
   background: var(--hover-overlay); /* E5.8#128.8：0.06 rgba == hover-overlay 暗值，改走权威 hover token */
   color: var(--text-primary);
 }
 
 /* ── 内联新建输入框（替代 window.prompt）── */
 
-.session-create-inline {
+.serial-monitor-session-create-inline {
   display: flex;
   align-items: center;
   gap: 3px;
   padding: 4px 8px 8px;
 }
 
-.session-create-input {
+.serial-monitor-session-create-input {
   flex: 1;
   min-width: 0;
   background: var(--bg-input); /* E5.8#128.8：rgba fallback 是死路径（--bg-input 恒定义）→ 精简 */
@@ -178,12 +178,12 @@
   box-sizing: border-box;
 }
 
-.session-create-input::placeholder {
+.serial-monitor-session-create-input::placeholder {
   color: var(--text-muted);
 }
 
-.session-create-ok,
-.session-create-cancel {
+.serial-monitor-session-create-ok,
+.serial-monitor-session-create-cancel {
   flex-shrink: 0;
   width: calc(22px * var(--ui-scale)); /* E5.8 Phase 12 #176：✓✕ 按钮盒乘 scale */
   height: calc(22px * var(--ui-scale));
@@ -198,34 +198,34 @@
   transition: background 100ms;
 }
 
-.session-create-ok {
+.serial-monitor-session-create-ok {
   color: var(--accent);
 }
 
-.session-create-ok:hover {
+.serial-monitor-session-create-ok:hover {
   background: color-mix(in srgb, var(--text-primary) 8%, transparent); /* E5.8#128.8：rgba → 文字色 8% 合成 */
 }
 
-.session-create-cancel {
+.serial-monitor-session-create-cancel {
   color: var(--text-muted);
 }
 
-.session-create-cancel:hover {
+.serial-monitor-session-create-cancel:hover {
   background: color-mix(in srgb, var(--text-primary) 8%, transparent); /* E5.8#128.8：rgba → 文字色 8% 合成 */
   color: var(--text-primary);
 }
 
 /* ── 空状态 ── */
 
-.session-empty {
+.serial-monitor-session-empty {
   padding: 12px 8px;
-  font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：session-empty 12→sm */
+  font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：serial-monitor-session-empty 12→sm */
   color: var(--text-muted);
   text-align: center;
   line-height: 1.6;
 }
 
-.session-empty-link {
+.serial-monitor-session-empty-link {
   background: transparent;
   border: none;
   color: var(--accent);
@@ -237,13 +237,13 @@
   transition: color 100ms;
 }
 
-.session-empty-link:hover {
+.serial-monitor-session-empty-link:hover {
   color: var(--accent-hover);
 }
 
 /* ── 收发设置占位符 ── */
 
-.session-settings-placeholder {
+.serial-monitor-session-settings-placeholder {
   padding: 12px 8px;
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：settings-placeholder 12→sm */
   color: var(--text-muted);
@@ -252,8 +252,8 @@
 
 /* ── 设置分区标题 ── */
 
-.setting-section-label {
-  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：setting-section-label 11→xs */
+.serial-monitor-setting-section-label {
+  font-size: var(--font-size-xs); /* E5.8 Phase 12 #176：serial-monitor-setting-section-label 11→xs */
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -263,17 +263,17 @@
 
 /* ── 设置组（复用旧样式，轻量调整） ── */
 
-.setting-group {
+.serial-monitor-setting-group {
   padding: 4px 12px;
 }
 
-.setting-group + .setting-group {
+.serial-monitor-setting-group + .serial-monitor-setting-group {
   border-top: 1px solid var(--separator);
 }
 
 /* ── 共享表单元素 ── */
 
-.select-input {
+.serial-monitor-select-input {
   min-width: 80px;
   max-width: 100%;
   flex: 1;

@@ -49,7 +49,7 @@ export default function SerialSettingsView() {
   // ── 无活跃会话时显示占位 ──
   if (!activeSession) {
     return (
-      <div className="session-settings-placeholder">
+      <div className="serial-monitor-session-settings-placeholder">
         {t("选择一个会话以编辑收发设置")}
       </div>
     );

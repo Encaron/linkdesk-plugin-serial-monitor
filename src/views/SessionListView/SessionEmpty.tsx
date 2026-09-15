@@ -11,9 +11,9 @@ export interface SessionEmptyProps {
 export function SessionEmpty({ onCreate }: SessionEmptyProps) {
   const { t } = useTranslation();
   return (
-    <div className="session-empty">
+    <div className="serial-monitor-session-empty">
       {t("暂无串口监视器会话。")}
-      <button className="session-empty-link" onClick={onCreate}>
+      <button className="serial-monitor-session-empty-link" onClick={onCreate}>
         [+ {t("新建")}]
       </button>
     </div>

@@ -57,11 +57,11 @@ function SearchBar({
   if (!visible) return null;
 
   return (
-    <div className="search-bar">
-      <span className="codicon codicon-search search-icon" />
+    <div className="serial-monitor-search-bar">
+      <span className="codicon codicon-search serial-monitor-search-icon" />
       <input
         ref={inputRef}
-        className="search-input"
+        className="serial-monitor-search-input"
         type="text"
         placeholder={t("搜索...")}
         value={text}
@@ -76,18 +76,18 @@ function SearchBar({
         }}
       />
       {matchCount > 0 && (
-        <span className="search-count">{matchIndex}/{matchCount}</span>
+        <span className="serial-monitor-search-count">{matchIndex}/{matchCount}</span>
       )}
       <button
-        className={`search-opt${caseSensitive ? " active" : ""}`}
+        className={`serial-monitor-search-opt${caseSensitive ? " active" : ""}`}
         onClick={() => onCaseToggle(!caseSensitive)}
         title={t("大小写敏感")}
       >
         Aa
       </button>
-      <button className="search-nav" onClick={() => onNavigate(-1)} title={t("上一个")}><span className="codicon codicon-arrow-up" /></button>
-      <button className="search-nav" onClick={() => onNavigate(1)} title={t("下一个")}><span className="codicon codicon-arrow-down" /></button>
-      <button className="search-close" onClick={onClose} title={t("关闭搜索")}><span className="codicon codicon-close" /></button>
+      <button className="serial-monitor-search-nav" onClick={() => onNavigate(-1)} title={t("上一个")}><span className="codicon codicon-arrow-up" /></button>
+      <button className="serial-monitor-search-nav" onClick={() => onNavigate(1)} title={t("下一个")}><span className="codicon codicon-arrow-down" /></button>
+      <button className="serial-monitor-search-close" onClick={onClose} title={t("关闭搜索")}><span className="codicon codicon-close" /></button>
     </div>
   );
 }

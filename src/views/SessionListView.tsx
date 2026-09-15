@@ -59,9 +59,9 @@ export default function SessionListView() {
   return (
     <>
       {/* 新建按钮——内容顶部，不靠 SidebarSection header actions */}
-      <div className="session-list-toolbar">
+      <div className="serial-monitor-session-list-toolbar">
         <button
-          className="session-create-btn"
+          className="serial-monitor-session-create-btn"
           title={t("新建会话")}
           onClick={(e) => {
             e.stopPropagation();
@@ -71,7 +71,7 @@ export default function SessionListView() {
           + {t("新建")}
         </button>
         {sessions.length > 0 && (
-          <span className="session-count">({sessions.length})</span>
+          <span className="serial-monitor-session-count">({sessions.length})</span>
         )}
       </div>
 

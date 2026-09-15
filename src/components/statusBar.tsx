@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 import type { PluginStateChangedPayload } from "@linkdesk/contracts";
 import { useTranslation } from "react-i18next";
 import { SERIAL_MONITOR_PLUGIN_ID } from "../utils/pluginId";
-// E5.8#54：灯 + (N) 同组对齐样式（serial-status-conn/led）
+// E5.8#54：灯 + (N) 同组对齐样式（serial-monitor-serial-status-conn/led）
 import "../styles/StatusBar.css";
 // E5.8#29：活动会话口——状态栏只显示活动标签页的口（多口下各标签页各亮各的）
 import { useSerialSessions } from "../hooks/useSerialSessions";
@@ -81,9 +81,9 @@ export default function SerialMonitorStatusBar() {
     <>
       {showConnection && (
         /* E5.8#54：灯 + (N) 同组 inline-flex——垂直中线对齐 + 紧凑 gap，不再各占外部 gap 产生大间距 */
-        <span className="serial-status-conn">
+        <span className="serial-monitor-serial-status-conn">
           <span
-            className="serial-status-led"
+            className="serial-monitor-serial-status-led"
             title={isOpen ? t("已连接") : t("未连接")}
             style={{ color: isOpen ? "var(--serial-monitor-ok)" : "var(--text-muted)" }}
           >
@@ -91,7 +91,7 @@ export default function SerialMonitorStatusBar() {
           </span>
           {/* E5.8#30.12：口数 (N)——≥2 才显示数字，开 1 个只亮灯；随 connection 配置一并显隐 */}
           {openPortCount >= 2 && (
-            <span className="status-text">{`(${openPortCount})`}</span>
+            <span className="serial-monitor-status-text">{`(${openPortCount})`}</span>
           )}
         </span>
       )}
