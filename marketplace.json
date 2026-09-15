@@ -1,24 +1,30 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-15T06:16:55.818Z",
+  "updatedAt": "2026-09-15T16:26:30.012Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.11",
+      "version": "1.0.12",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.11/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.12/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.11/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.12/resources/icon.svg",
       "marketIconSource": "url",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.11/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.11/serial-monitor.linkdesk-plugin",
-      "size": 560430,
-      "publishedAt": "2026-09-15T06:16:55.818Z",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.12/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.12/serial-monitor.linkdesk-plugin",
+      "size": 561449,
+      "publishedAt": "2026-09-15T16:26:30.012Z",
       "versions": [
+        {
+          "version": "1.0.12",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.12/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-09-15T16:26:30.012Z",
+          "changelog": "- **CSS 类名与关键帧全部带本插件前缀**（`serial-monitor-*`）：插件视图的那张样式表里同时装着宿主 CSS、共享组件 CSS 与**所有已加载插件**的 CSS，裸类名（`session-item` / `toolbar-btn` / `search-input` …）在这张表里是**全局标识符**——一方定义、他方渲染，两边样式落到同一个元素上，**不报错、只是长得不对**。本版把本仓 **63 个类名**与 **2 个关键帧**（`fadeIn` / `slideDown`）一律改成 `serial-monitor-` 前缀（只插入、不改词干），并同笔改了这两处关键帧的 `animation:` 引用\n- **带走一起真实撞车**：`search-input` 此前与本插件的文件树各定义一份、规则体还不一样，级联合并后谁后加载谁赢一半——两边都加前缀后，这类撞车从构造上不再可能\n- **两处刻意保留原名**（都是「别人的名字」，不是本插件自有元素的类名）：\n  - `.cm-panels` 是 **CodeMirror 自己的类**（编辑器原生搜索面板，DOM 由 `@codemirror/view` 生成），本插件只对它做样式调优 ⇒ 规则改为 **scoped**（`.serial-monitor-cm-container .cm-panels`）：既不占全局名，面板样式也一字未变。（若照搬「加前缀」会把它改成一条**谁都不匹配的死规则**，搜索面板静默掉样式。）\n  - `setting-group` 是**宿主** `src/index.css` 的全局工具类，本插件照旧渲染它（与 `className=\"input\"` 同一性质的消费），另加自有类 `serial-monitor-setting-group` 承载原本挂在 `.setting-group` 上的那处 `padding` 调优\n- 无功能变化、无视觉变化——24 个改动文件经机械证明逐字节等于改名前「只插入前缀」的字节"
+        },
         {
           "version": "1.0.11",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.11/serial-monitor.linkdesk-plugin",
