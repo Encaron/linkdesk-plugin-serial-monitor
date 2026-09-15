@@ -1,24 +1,30 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-14T18:09:51.633Z",
+  "updatedAt": "2026-09-15T06:16:55.818Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.10",
+      "version": "1.0.11",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.10/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.11/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.10/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.11/resources/icon.svg",
       "marketIconSource": "url",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.10/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.10/serial-monitor.linkdesk-plugin",
-      "size": 559879,
-      "publishedAt": "2026-09-14T18:09:51.633Z",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.11/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.11/serial-monitor.linkdesk-plugin",
+      "size": 560430,
+      "publishedAt": "2026-09-15T06:16:55.818Z",
       "versions": [
+        {
+          "version": "1.0.11",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.11/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-09-15T06:16:55.818Z",
+          "changelog": "- **适配 `@linkdesk/ui` 0.2.0 的类名归一**：共享组件的裸类名（`badge` / `button` / `combobox` / `mdv` / `selectbox` / `sle` / `slider` / `toggle`）全部带上 `ldk-` 前缀——它们此前在「宿主 + 共享组件 + 所有已加载插件」同一张样式表里是**全局标识符**，通用英文词极易被插件自己的元素撞上。本插件对共享控件的四处 scoped 调优同步改名：`.control-bar .selectbox-trigger` / `.combobox` / `.combobox-field` / `.combobox-input` → 各自加 `ldk-` 前缀\n- 这四行不改就是**静默失配**——命令条里下拉控件的背景、边框、圆角与字号那几条规则不再命中，控件会退回组件默认密度，没有报错\n- `@linkdesk/ui` 升到 `^0.2.0`（`^0.1.4` → `^0.2.0`）。**必须手动放宽区间**：0.x 的 caret 只在上界之内挑版本，`^0.1.4` 永远够不到 0.2.0\n- 无功能变化"
+        },
         {
           "version": "1.0.10",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.10/serial-monitor.linkdesk-plugin",
