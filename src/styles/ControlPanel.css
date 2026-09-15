@@ -43,7 +43,7 @@
 
 /* ── SelectBox 在命令条内——加可感知的交互感 ── */
 
-.control-bar .selectbox-trigger {
+.control-bar .ldk-selectbox-trigger {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -53,11 +53,11 @@
 
 /* ── E5.8#30.17：Combobox 在命令条内——与 SelectBox 同视觉密度 ── */
 
-.control-bar .combobox {
+.control-bar .ldk-combobox {
   min-width: 86px;
 }
 
-.control-bar .combobox-field {
+.control-bar .ldk-combobox-field {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -65,7 +65,7 @@
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：combobox-field 12→sm */
 }
 
-.control-bar .combobox-input {
+.control-bar .ldk-combobox-input {
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：combobox-input 12→sm */
 }
 
