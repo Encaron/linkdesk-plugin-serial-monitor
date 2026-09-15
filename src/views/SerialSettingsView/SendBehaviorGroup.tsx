@@ -17,7 +17,7 @@ export function SendBehaviorGroup({ api, session }: SendBehaviorGroupProps) {
   const { t } = useTranslation();
   const { mkSelect, mkToggle, mkSetter } = api;
   return (
-    <div className="setting-group serial-monitor-setting-group">
+    <div className="ldk-setting-group serial-monitor-setting-group">
       <div className="serial-monitor-setting-section-label">{t("发送行为")}</div>
       <FormRow label={t("换行符")}>
         {mkSelect("lineEnding", LINE_ENDINGS)}
@@ -28,7 +28,7 @@ export function SendBehaviorGroup({ api, session }: SendBehaviorGroupProps) {
       {session.autoRepeat && (
         <FormRow label={t("间隔(ms)")}>
           <input
-            className="input"
+            className="ldk-input"
             type="number"
             value={session.repeatInterval}
             style={{ width: 80 }}

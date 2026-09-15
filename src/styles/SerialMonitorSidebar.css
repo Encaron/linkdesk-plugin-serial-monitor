@@ -271,12 +271,5 @@
   border-top: 1px solid var(--separator);
 }
 
-/* ── 共享表单元素 ── */
-
-.serial-monitor-select-input {
-  min-width: 80px;
-  max-width: 100%;
-  flex: 1;
-  cursor: pointer;
-  appearance: auto;
-}
+/* E6#109k-a①（1.18 裁决，搭 1.17 的车落地）：原 `.serial-monitor-select-input` 规则已删——
+   自 1.14⑤ 起零渲染点（18 仓 ＋ 池文档实机全扫无消费方），是纯死规则。 */

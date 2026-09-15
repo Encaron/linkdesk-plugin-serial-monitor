@@ -44,14 +44,14 @@ export default function QuickSendBar(p: QuickSendBarProps) {
         {p.qsAdding ? (
           <div className="serial-monitor-quick-send-add-form">
             <input
-              className="input serial-monitor-qs-input"
+              className="ldk-input serial-monitor-qs-input"
               placeholder={t("名称")}
               value={p.qsName}
               onChange={(e) => p.setQsName(e.target.value)}
               autoFocus
             />
             <input
-              className="input serial-monitor-qs-input"
+              className="ldk-input serial-monitor-qs-input"
               placeholder={t("发送内容")}
               value={p.qsContent}
               onChange={(e) => p.setQsContent(e.target.value)}

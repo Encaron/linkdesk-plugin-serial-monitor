@@ -16,7 +16,7 @@ export function CodingGroup({ api, session }: CodingGroupProps) {
   const { t } = useTranslation();
   const { mkSelect, mkSetter } = api;
   return (
-    <div className="setting-group serial-monitor-setting-group">
+    <div className="ldk-setting-group serial-monitor-setting-group">
       <div className="serial-monitor-setting-section-label">{t("编码")}</div>
       <FormRow label={t("接收模式")}>
         <SelectBox

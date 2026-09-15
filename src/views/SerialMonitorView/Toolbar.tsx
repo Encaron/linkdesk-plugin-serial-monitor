@@ -50,7 +50,7 @@ export default function Toolbar(p: ToolbarProps) {
         onChange={(v) => p.onFilterModeChange(v as "all" | "protocol" | "plain")}
       />
       <input
-        className="input serial-monitor-filter-keyword-input"
+        className="ldk-input serial-monitor-filter-keyword-input"
         placeholder={t("关键字过滤…")}
         value={p.filterKeyword}
         onChange={(e) => p.onFilterKeywordChange(e.target.value)}

@@ -16,7 +16,7 @@ export function DisplayGroup({ api, timeFormats }: DisplayGroupProps) {
   const { t } = useTranslation();
   const { mkSelect, mkToggle } = api;
   return (
-    <div className="setting-group serial-monitor-setting-group">
+    <div className="ldk-setting-group serial-monitor-setting-group">
       <div className="serial-monitor-setting-section-label">{t("显示")}</div>
       <FormRow label={t("时间戳")}>
         {mkSelect("timestampFormat", timeFormats)}
