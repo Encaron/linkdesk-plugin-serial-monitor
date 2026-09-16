@@ -1,5 +1,14 @@
 # 更新日志
 
+## v1.0.15（2026-09-16）
+
+- **适配宿主 E6#109l-b 的共享组件类名归一（`@linkdesk/ui` 0.3.0）**：共享组件余下的 52 个类名一律收进 `ldk-` 前缀——`colorpicker-*` / `ctx-*` / `form-row` / `inline-input*` / `number-input*` / `segmented-radio*` / `sidebar-section*` / `theme-picker*` / `theme-card` / `theme-preview` / `.tbadge` / `.tname` / `.pv-*`，外加关键帧 `selectbox-in → ldk-selectbox-in`。至此**宿主与共享组件自己定义的类名 100% 是 `ldk-` 开头**（258 ＋ 89 个独立定义，零例外），规则只剩一句、不再有任何登记表。
+- **本仓源码零改动**：本仓自己的 CSS 与 TSX 对这批共享组件类名的引用逐条核过 = **0 处**（本仓用组件本身，没有用后代选择器去微调它们）。唯一的文字性残留是 `src/styles/SerialMonitorView-receive.css:166` 一句注释里提到的 `.ctx-overlay`——那是**早就不存在的旧名**，注释本身也是陈旧的，不影响任何行为（本次不改，避免混入非必要改动）。
+- **依赖**：`@linkdesk/ui` `^0.2.0 → ^0.3.0`（**必须手动放宽区间**——0.x 的 caret 只在上界之内挑版本，`^0.2.0` 永远够不到 0.3.0）＋ 随包 `@linkdesk/plugin-sdk` `0.1.23 → 0.1.25`。
+- **解包复核（真产物）**：解开本版的 `serial-monitor.linkdesk-plugin` ⇒ 本仓自己的 CSS/JS **旧名 0 命中**；随包 `@linkdesk/ui` 的 CSS 里新名有命中。
+- `package.json` 的 `version` 顺带对齐到 `1.0.15`（此前停在 1.0.12、与 `plugin.json` 不同步）。
+- 无功能变化、无视觉变化。
+
 ## v1.0.14（2026-09-16）
 
 - **随包依赖对齐：`@linkdesk/ui` 由 `0.2.0` 升到 `0.2.1`。** 与 `settings` v1.0.13 同批——宿主 `.input → .ldk-input` 那次改名同时动了 `@linkdesk/ui` 这根轴，而本仓 lock 把 `0.2.0` 钉着（`npm install` 只要满足 `^0.2.0` 区间就不会动）⇒ 必须显式 `npm update @linkdesk/ui`。
