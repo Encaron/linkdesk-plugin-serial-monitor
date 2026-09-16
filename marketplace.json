@@ -1,24 +1,30 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-16T03:00:51.098Z",
+  "updatedAt": "2026-09-16T07:04:20.977Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.15",
+      "version": "1.0.16",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.15/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.16/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.15/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.16/resources/icon.svg",
       "marketIconSource": "url",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.15/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.15/serial-monitor.linkdesk-plugin",
-      "size": 563396,
-      "publishedAt": "2026-09-16T03:00:51.098Z",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.16/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.16/serial-monitor.linkdesk-plugin",
+      "size": 564126,
+      "publishedAt": "2026-09-16T07:04:20.977Z",
       "versions": [
+        {
+          "version": "1.0.16",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.16/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-09-16T07:04:20.977Z",
+          "changelog": "- **连接状态的本地 token 改挂自有根类**（配合宿主的样式作用域纪律）：`--serial-monitor-ok` 原先在**三处** `:root` 里各定义一遍，现在**只在 `SerialMonitorView.css` 写一笔**，挂三个消费子树的根类之下——`.serial-monitor-view`（主视图）／`.serial-monitor-sidebar`（侧栏）／`.serial-monitor-serial-status-conn`（状态栏那颗连接灯的祖先）。**值不变（`#22C55E`）、消费点不变 ⇒ 零视觉变化**，改的只是**定义的位置**。\n- **为什么要改**：`:root` 上的自定义属性**全文档可见**，而插件的样式表与宿主在**同一张表**里、后加载者赢 ⇒ 一条 `:root` 就能覆写宿主的契约名（宿主的颜色 / 圆角 / 层级大部分由样式表提供、不由程序写死）。宿主侧已把这条做成门禁（文档级作用域只有它自己的契约块能写），插件侧由 SDK 的 `check-css-namespace` 腿守着。\n- **顺手清掉一处死代码**：`--serial-monitor-err` 全仓零消费方（定义之后从没被任何规则或 `style` 引用过）⇒ 随本次整块删除，不再定义。\n- **订正两句陈旧的注释**：侧栏 CSS 头注里「`SidebarPool` 独立 WebContentsView、不共享主池定义」的理由**早已过期**（现在是最简 Pool、单 WCV，侧栏与主视图同文档）——那正是当初这处 `:root` 存在的原因，注释与定义一起清掉。\n- **依赖**：随包 `@linkdesk/plugin-sdk` `0.1.25 → 0.1.26`（新版多一条 token 作用域判据；本仓已按它清零）。\n- 无功能变化、无视觉变化。"
+        },
         {
           "version": "1.0.15",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.15/serial-monitor.linkdesk-plugin",
