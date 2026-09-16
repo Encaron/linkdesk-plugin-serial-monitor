@@ -1,5 +1,14 @@
 # 更新日志
 
+## v1.0.16（2026-09-16）
+
+- **连接状态的本地 token 改挂自有根类**（配合宿主的样式作用域纪律）：`--serial-monitor-ok` 原先在**三处** `:root` 里各定义一遍，现在**只在 `SerialMonitorView.css` 写一笔**，挂三个消费子树的根类之下——`.serial-monitor-view`（主视图）／`.serial-monitor-sidebar`（侧栏）／`.serial-monitor-serial-status-conn`（状态栏那颗连接灯的祖先）。**值不变（`#22C55E`）、消费点不变 ⇒ 零视觉变化**，改的只是**定义的位置**。
+- **为什么要改**：`:root` 上的自定义属性**全文档可见**，而插件的样式表与宿主在**同一张表**里、后加载者赢 ⇒ 一条 `:root` 就能覆写宿主的契约名（宿主的颜色 / 圆角 / 层级大部分由样式表提供、不由程序写死）。宿主侧已把这条做成门禁（文档级作用域只有它自己的契约块能写），插件侧由 SDK 的 `check-css-namespace` 腿守着。
+- **顺手清掉一处死代码**：`--serial-monitor-err` 全仓零消费方（定义之后从没被任何规则或 `style` 引用过）⇒ 随本次整块删除，不再定义。
+- **订正两句陈旧的注释**：侧栏 CSS 头注里「`SidebarPool` 独立 WebContentsView、不共享主池定义」的理由**早已过期**（现在是最简 Pool、单 WCV，侧栏与主视图同文档）——那正是当初这处 `:root` 存在的原因，注释与定义一起清掉。
+- **依赖**：随包 `@linkdesk/plugin-sdk` `0.1.25 → 0.1.26`（新版多一条 token 作用域判据；本仓已按它清零）。
+- 无功能变化、无视觉变化。
+
 ## v1.0.15（2026-09-16）
 
 - **适配宿主 E6#109l-b 的共享组件类名归一（`@linkdesk/ui` 0.3.0）**：共享组件余下的 52 个类名一律收进 `ldk-` 前缀——`colorpicker-*` / `ctx-*` / `form-row` / `inline-input*` / `number-input*` / `segmented-radio*` / `sidebar-section*` / `theme-picker*` / `theme-card` / `theme-preview` / `.tbadge` / `.tname` / `.pv-*`，外加关键帧 `selectbox-in → ldk-selectbox-in`。至此**宿主与共享组件自己定义的类名 100% 是 `ldk-` 开头**（258 ＋ 89 个独立定义，零例外），规则只剩一句、不再有任何登记表。

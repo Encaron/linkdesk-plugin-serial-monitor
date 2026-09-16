@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@linkdesk/plugin-sdk/schemas/plugin.schema.json",
   "pluginId": "serial-monitor",
   "name": "串口监视器",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "minAppVersion": "0.2.0",
   "icon": "resources/icon-bar.svg",
   "marketIcon": "resources/icon.svg",
