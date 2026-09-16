@@ -2,16 +2,22 @@
  * 串口监视器——外壳样式（视图整体 / 会话失效占位 / 工具栏 / 搜索条 / 关键字过滤）。
  * E6#87b：原 591 行本文件按现有分节拆为三件（本文件 + `SerialMonitorView-receive.css`
  * + `SerialMonitorView-send.css`），**只搬家不改样式**。
- * 连接状态 token `--serial-monitor-ok` 定义在本文件（挂自有根类之下，E6#109n-b）
+ * 连接状态 token `--serial-monitor-ok` 定义在本文件（挂自有类之下，E6#109n-b）
  * ——三件由 src/index.tsx 按原级联顺序导入。
  */
 
-/* 件 6（#109n-b）：插件本地语义 token —— 挂自有命名空间的根类之下（禁 document 级）：
+/* 件 6（#109n-b）：插件本地语义 token —— 挂自有命名空间的类之下（禁 document 级）：
    `:root` 上的定义全文档可见，而插件样式表与宿主**同一张表**、后注入者赢
    ⇒ 一条 `:root` 就能覆写宿主的契约名（宿主 94 个契约名里 83 个没有 inline 屏蔽）。
-   三个根类 = 三个消费子树（主视图 / 侧栏 / 状态栏），一笔定义覆盖全部消费点。 */
+   三个选择器 = 三个**真实存在**的消费子树，一笔定义覆盖全部消费点：
+     · `.serial-monitor-view`         主视图（含控制面板：它在 .serial-monitor-view 之下）
+     · `.serial-monitor-session-item` 侧栏会话行（状态点 .serial-monitor-session-dot 在其中）
+     · `.serial-monitor-serial-status-conn` 状态栏那颗连接灯的祖先
+   ⚠️ **别用 `.serial-monitor-sidebar`**：那个类是 E36 拆 sidebar.tsx 之前的遗留，**实机 DOM 里
+      不存在**（侧栏视图由壳的 `.ldk-sidebar-section*` 包裹，插件侧只有 `.serial-monitor-session-*`）
+      ——挂它会静默丢掉侧栏状态点的颜色。 */
 .serial-monitor-view,
-.serial-monitor-sidebar,
+.serial-monitor-session-item,
 .serial-monitor-serial-status-conn {
   --serial-monitor-ok: #22C55E;
 }

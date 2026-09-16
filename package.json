@@ -1,6 +1,6 @@
 {
   "name": "linkdesk-plugin-serial-monitor",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "private": true,
   "type": "module",
   "description": "串口监视器（出厂预装，可卸载）——独立仓可自足构建：build 走 @linkdesk/plugin-sdk 的 npm 通道。不列 serialport（方案①留壳，走 window.linkdesk.serial.* 数据源后门通道）；@codemirror×3 + @linkdesk/ui 自声明（E6#16 谁消费谁声明）",

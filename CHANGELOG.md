@@ -1,5 +1,13 @@
 # 更新日志
 
+## v1.0.17（2026-09-16）
+
+- **修 v1.0.16 的一处真缺陷：侧栏会话状态点的绿色丢了。** v1.0.16 把 `--serial-monitor-ok` 从 `:root` 挪到了三个「自有根类」之下，其中 **`.serial-monitor-sidebar` 是错的**——那个类名是当初 `sidebar.tsx` 还在时的容器类，**E36 拆分之后实机 DOM 里根本不存在**（侧栏视图由壳的 `.ldk-sidebar-section*` 包裹，插件侧只有 `.serial-monitor-session-*`）。⇒ 那条选择器是**空转**，侧栏里 `.serial-monitor-session-dot.on` 的 `background: var(--serial-monitor-ok)` 取不到值（自定义属性未定义 ⇒ `background` 变成初始值）——**那是肉眼可见的变化**，正是本轮要避免的东西。
+- **改法**：选择器里的 `.serial-monitor-sidebar` 换成 **`.serial-monitor-session-item`**（侧栏会话行，状态点 `.serial-monitor-session-dot` 就在它里面）。三个选择器各自对应一个**实机存在**的消费子树：`.serial-monitor-view`（主视图，控制面板也在其下）／`.serial-monitor-session-item`（侧栏）／`.serial-monitor-serial-status-conn`（状态栏连接灯）。
+- **实机复测（隔离 profile ＋ CDP）**：在真跑的池文档里 —— 侧栏子树内 `.serial-monitor-session-item` 上的 `--serial-monitor-ok` = `#22C55E`、其内 `.serial-monitor-session-dot` 同样 = `#22C55E`、状态栏连接灯消费出的 `color` = `rgb(34, 197, 94)`；**文档级 `--serial-monitor-ok` 为空**（不再有人写 `:root`）。
+- **教训（写给下一位）**：「挂到自己的根类之下」这句话里，**「根类」必须是实机 DOM 里真有的类**——按 CSS 文件里的类名推断会踩空（这次就是）。查法：实机读该子树的 DOM class 链，别只看 `.css` 里定义了什么。
+- 依赖与 v1.0.16 相同（随包 `@linkdesk/plugin-sdk` 0.1.26）；无功能变化。
+
 ## v1.0.16（2026-09-16）
 
 - **连接状态的本地 token 改挂自有根类**（配合宿主的样式作用域纪律）：`--serial-monitor-ok` 原先在**三处** `:root` 里各定义一遍，现在**只在 `SerialMonitorView.css` 写一笔**，挂三个消费子树的根类之下——`.serial-monitor-view`（主视图）／`.serial-monitor-sidebar`（侧栏）／`.serial-monitor-serial-status-conn`（状态栏那颗连接灯的祖先）。**值不变（`#22C55E`）、消费点不变 ⇒ 零视觉变化**，改的只是**定义的位置**。
