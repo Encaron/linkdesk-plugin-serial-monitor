@@ -52,8 +52,8 @@ export default function SessionListView() {
   });
 
   useEffect(() => {
-    lk().contextKey?.set("serialSessionFocus", activeSessionId !== null);
-    return () => { lk().contextKey?.set("serialSessionFocus", false); };
+    lk().contextKey?.set("serial-monitor.serialSessionFocus", activeSessionId !== null);
+    return () => { lk().contextKey?.set("serial-monitor.serialSessionFocus", false); };
   }, [activeSessionId]);
 
   return (

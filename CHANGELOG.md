@@ -1,5 +1,16 @@
 # 更新日志
 
+## v1.0.18（2026-09-17）
+
+- **上下文旗子带上归属**（E6#111n-3）：`sourceOpen` → `serial-monitor.sourceOpen`、`serialSessionFocus` → `serial-monitor.serialSessionFocus`。
+  旗子是**运行时状态**（进内存 map，不落盘）⇒ **无迁移面**，老用户零影响
+- **写点与读点同笔改**（关掉漏改那个静默失败模式）：
+  - 写点 `src/services/SerialContext/store.ts:54`（`sourceOpen`）、`src/views/SessionListView.tsx:55,56`（`serialSessionFocus`）
+  - 读点 `plugin.json:71,85,95` 的 `when: activeEditor == 'serial-monitor' && sourceOpen`
+  🔴 旗子读取是「按名字碰」（拿名字当 map 键查）⇒ **漏一处不报错，只是门控静默失效**
+- ⚠️ `serialSessionFocus` 经查**全仓无读点**（1.37 §14.2 已登记为死旗子）——按本轴禁区「只登记不删」**照旧改名**，去留另案
+- 无功能变化——「暂停接收」菜单项的显隐条件与改前逐项一致
+
 ## v1.0.17（2026-09-16）
 
 - **修 v1.0.16 的一处真缺陷：侧栏会话状态点的绿色丢了。** v1.0.16 把 `--serial-monitor-ok` 从 `:root` 挪到了三个「自有根类」之下，其中 **`.serial-monitor-sidebar` 是错的**——那个类名是当初 `sidebar.tsx` 还在时的容器类，**E36 拆分之后实机 DOM 里根本不存在**（侧栏视图由壳的 `.ldk-sidebar-section*` 包裹，插件侧只有 `.serial-monitor-session-*`）。⇒ 那条选择器是**空转**，侧栏里 `.serial-monitor-session-dot.on` 的 `background: var(--serial-monitor-ok)` 取不到值（自定义属性未定义 ⇒ `background` 变成初始值）——**那是肉眼可见的变化**，正是本轮要避免的东西。

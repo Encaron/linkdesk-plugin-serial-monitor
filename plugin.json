@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@linkdesk/plugin-sdk/schemas/plugin.schema.json",
   "pluginId": "serial-monitor",
   "name": "串口监视器",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "minAppVersion": "0.2.0",
   "icon": "resources/icon-bar.svg",
   "marketIcon": "resources/icon.svg",
@@ -68,7 +68,7 @@
       { "id": "serial-monitor.selectAll", "title": "全选", "category": "串口监视器", "when": "activeEditor == 'serial-monitor'" },
       { "id": "serial-monitor.clear", "title": "清空接收区", "category": "串口监视器", "when": "activeEditor == 'serial-monitor'" },
       { "id": "serial-monitor.clearSend", "title": "清空发送区", "category": "串口监视器", "when": "activeEditor == 'serial-monitor'" },
-      { "id": "serial-monitor.togglePause", "title": "暂停接收", "category": "串口监视器", "when": "activeEditor == 'serial-monitor' && sourceOpen" },
+      { "id": "serial-monitor.togglePause", "title": "暂停接收", "category": "串口监视器", "when": "activeEditor == 'serial-monitor' && serial-monitor.sourceOpen" },
       { "id": "serial-monitor.exportLog", "title": "导出日志", "category": "串口监视器", "when": "activeEditor == 'serial-monitor'" },
       { "id": "serial-monitor.toggleSendMode", "title": "切换到 HEX 发送", "category": "串口监视器", "when": "activeEditor == 'serial-monitor'" },
       { "id": "serial-monitor.toggleEcho", "title": "关闭消息回显", "category": "串口监视器", "when": "activeEditor == 'serial-monitor'" },
@@ -82,7 +82,7 @@
         { "command": "serial-monitor.copy", "group": "edit", "when": "activeEditor == 'serial-monitor'" },
         { "command": "serial-monitor.selectAll", "group": "edit", "when": "activeEditor == 'serial-monitor'" },
         { "command": "serial-monitor.clear", "group": "serial-monitor", "when": "activeEditor == 'serial-monitor'" },
-        { "command": "serial-monitor.togglePause", "group": "serial-monitor", "when": "activeEditor == 'serial-monitor' && sourceOpen" }
+        { "command": "serial-monitor.togglePause", "group": "serial-monitor", "when": "activeEditor == 'serial-monitor' && serial-monitor.sourceOpen" }
       ],
       "quickSendContext": [
         { "command": "serial-monitor.quickSendFill", "group": "edit" },
@@ -92,7 +92,7 @@
       "commandPalette": [
         { "command": "serial-monitor.clear", "when": "activeEditor == 'serial-monitor'" },
         { "command": "serial-monitor.clearSend", "when": "activeEditor == 'serial-monitor'" },
-        { "command": "serial-monitor.togglePause", "when": "activeEditor == 'serial-monitor' && sourceOpen" },
+        { "command": "serial-monitor.togglePause", "when": "activeEditor == 'serial-monitor' && serial-monitor.sourceOpen" },
         { "command": "serial-monitor.exportLog", "when": "activeEditor == 'serial-monitor'" },
         { "command": "serial-monitor.toggleSendMode", "when": "activeEditor == 'serial-monitor'" },
         { "command": "serial-monitor.toggleEcho", "when": "activeEditor == 'serial-monitor'" },

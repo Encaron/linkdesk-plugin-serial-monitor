@@ -48,10 +48,10 @@ function _scopeKey(key: string, port?: string): string {
  * E5.8#30.9（P3）：灯按口显式写单一咽喉——isOpen/sourceName/TX-RX 清零按「显式传入 port」写 per-port pluginState 键。
  * open/close/toggle/setSourceName/setBaudRate/F5 恢复全走它（审视 ②：防「一个 bug 多个地方出现」= 归一性）；
  * 守卫读显式传入 port 而非投影口——谁打开写谁的，不短路（后开者不再覆盖前灯）。
- * contextKey sourceOpen = 本口开闭（投影语义——多口并存时最后操作口决定，与 #30.8 前一致）。
+ * contextKey serial-monitor.sourceOpen = 本口开闭（投影语义——多口并存时最后操作口决定，与 #30.8 前一致）。
  */
 export function _writePortState(port: string, isOpen: boolean): void {
-  window.linkdesk?.contextKey?.set("sourceOpen", isOpen).catch(() => {});
+  window.linkdesk?.contextKey?.set("serial-monitor.sourceOpen", isOpen).catch(() => {});
   window.linkdesk?.pluginState?.set("serial-monitor", _scopeKey("isOpen", port), isOpen).catch(() => {});
   window.linkdesk?.pluginState?.set("serial-monitor", _scopeKey("sourceName", port), port).catch(() => {});
   if (!isOpen) {
