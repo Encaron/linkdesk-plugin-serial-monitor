@@ -1,24 +1,30 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-16T07:22:26.723Z",
+  "updatedAt": "2026-09-17T13:39:13.453Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.17",
+      "version": "1.0.18",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.17/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.18/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.17/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.18/resources/icon.svg",
       "marketIconSource": "url",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.17/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.17/serial-monitor.linkdesk-plugin",
-      "size": 564853,
-      "publishedAt": "2026-09-16T07:22:26.723Z",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.18/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.18/serial-monitor.linkdesk-plugin",
+      "size": 565358,
+      "publishedAt": "2026-09-17T13:39:13.453Z",
       "versions": [
+        {
+          "version": "1.0.18",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.18/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-09-17T13:39:13.453Z",
+          "changelog": "- **上下文旗子带上归属**（E6#111n-3）：`sourceOpen` → `serial-monitor.sourceOpen`、`serialSessionFocus` → `serial-monitor.serialSessionFocus`。\n  旗子是**运行时状态**（进内存 map，不落盘）⇒ **无迁移面**，老用户零影响\n- **写点与读点同笔改**（关掉漏改那个静默失败模式）：\n  - 写点 `src/services/SerialContext/store.ts:54`（`sourceOpen`）、`src/views/SessionListView.tsx:55,56`（`serialSessionFocus`）\n  - 读点 `plugin.json:71,85,95` 的 `when: activeEditor == 'serial-monitor' && sourceOpen`\n  🔴 旗子读取是「按名字碰」（拿名字当 map 键查）⇒ **漏一处不报错，只是门控静默失效**\n- ⚠️ `serialSessionFocus` 经查**全仓无读点**（1.37 §14.2 已登记为死旗子）——按本轴禁区「只登记不删」**照旧改名**，去留另案\n- 无功能变化——「暂停接收」菜单项的显隐条件与改前逐项一致"
+        },
         {
           "version": "1.0.17",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.17/serial-monitor.linkdesk-plugin",
