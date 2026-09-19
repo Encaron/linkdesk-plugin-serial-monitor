@@ -5,22 +5,15 @@
  * 设计 DNA：Dark OLED + Minimalism + Glassmorphism 点缀（§3.13）
  * - 颜色走 CSS 变量 `var(--session-color)`（per-instance，对标 --card-accent）
  * - 连接状态走串口监视器专属变量 `--serial-monitor-ok`——它定义在
- *   `SerialMonitorView.css`（挂三个自有根类之下，含 `.serial-monitor-sidebar`）
+ *   `SerialMonitorView.css`（挂三个自有根类之下——旧侧栏容器类已随 E6#113 删除）
  * - 少用边框，多用颜色/透明度区分层级
  *
  * E6#109n-b：原先在本文件 `:root` 里定义了两个「连接状态」本地 token（E5.6#11-fix 的遗留，
  * 理由「SidebarPool 独立 WebContentsView」**已过期**——E5.7#4/#12 起是极简 Pool、单 WCV，
  * 侧栏与主视图同文档）⇒ 整块删除：其中「错误态」那个全仓零消费方（死代码），
- * 「连接态」改由 SerialMonitorView.css 一笔定义（挂三个自有根类之下，含本侧栏根类）。
+ * 「连接态」改由 SerialMonitorView.css 一笔定义（挂三个自有根类之下，侧栏消费点在会话行根类上）。
  * 🔴 目的：token 作用域规则——文档级（`:root`）只有宿主契约块能写（`:root` 上的定义全文档可见）。
  */
-
-/* ── 侧栏容器 ── */
-
-.serial-monitor-sidebar {
-  padding: 0;
-  /* SidebarSection 自带间距——这里不额外加 padding */
-}
 
 /* ── 会话列表项 ── */
 
