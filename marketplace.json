@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-19T10:04:46.619Z",
+  "updatedAt": "2026-09-19T10:12:35.346Z",
   "plugins": [
     {
       "id": "serial-monitor",
@@ -17,13 +17,13 @@
       "minAppVersion": "0.2.13",
       "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.21/README.md",
       "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.21/serial-monitor.linkdesk-plugin",
-      "size": 159190,
-      "publishedAt": "2026-09-19T10:04:46.619Z",
+      "size": 159380,
+      "publishedAt": "2026-09-19T10:12:35.346Z",
       "versions": [
         {
           "version": "1.0.21",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.21/serial-monitor.linkdesk-plugin",
-          "publishedAt": "2026-09-19T10:04:46.619Z",
+          "publishedAt": "2026-09-19T10:12:35.346Z",
           "changelog": "- **删 `.serial-monitor-sidebar` 规则本体＋收两条指向它的陈旧注释**（E6#113）：1.24（v1.0.17）已实证该类在实机 DOM 里不存在、并把 token 挪到三个真实根类之下，但规则本体留到今天；本轮删规则、退役 `SerialMonitorView.css` 的「别用它」警告、订正 `SerialMonitorSidebar.css` 头注的根类表述。删后仓内 src 零残留、`verify`／`test` 全绿。无功能变化。"
         },
         {
