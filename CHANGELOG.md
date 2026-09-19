@@ -1,5 +1,11 @@
 # 更新日志
 
+## v1.0.19（2026-09-19）
+
+- **换轨到「壳池集中供给」（E6#125 · L9 第 9.4 轮）**：`@linkdesk/ui` 不再编译进本插件 bundle——构建时 external，运行时由壳池供给同一份实例。源码 `import` 一行未改，只把依赖从 `^0.3.0` 换到重锚号 `^0.2.13`（`@linkdesk/ui` 自此与壳同号锁步）＋ `@linkdesk/plugin-sdk` `^0.1.19 → ^0.1.41`，重新构建发布。
+- **读数（产物前后对照）**：包 **565,358 → 158,422 字节（−72.0%）**；根 bundle JS **978,655 → 435,217 字节**，CSS **→ 21,890 字节**。产物里组件实现痕迹（`data-overlay-wrapper` / `overlay-root` / `ldk-badge` / `ldk-button` / `ldk-form-row` / `ldk-toggle`）grep **零命中**；只剩 `from "@linkdesk/ui"` 裸 specifier 交给壳解析。
+- **本仓 CSS 里对宿主类名的定位照旧生效**：`ControlPanel.css` 的 `.ldk-selectbox-trigger` / `.ldk-combobox*` 与 `className="ldk-input"` 一类写法没动——那些类名的**定义**现在由壳池全局供给，比过去「自带一份」更不容易漂。
+
 ## v1.0.18（2026-09-17）
 
 - **上下文旗子带上归属**（E6#111n-3）：`sourceOpen` → `serial-monitor.sourceOpen`、`serialSessionFocus` → `serial-monitor.serialSessionFocus`。
