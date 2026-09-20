@@ -59,7 +59,7 @@ export default function SessionListView() {
   return (
     <>
       {/* 新建按钮——内容顶部，不靠 SidebarSection header actions */}
-      <div className="serial-monitor-session-list-toolbar">
+      <div>
         <button
           className="serial-monitor-session-create-btn"
           title={t("新建会话")}
@@ -71,7 +71,7 @@ export default function SessionListView() {
           + {t("新建")}
         </button>
         {sessions.length > 0 && (
-          <span className="serial-monitor-session-count">({sessions.length})</span>
+          <span>({sessions.length})</span>
         )}
       </div>
 

@@ -32,6 +32,7 @@ function SearchBar({
         onOpen();
       }
     };
+    // eslint-disable-next-line linkdesk/no-global-key-listener -- 全局打开快捷键（Ctrl+F）：搜索框未渲染、焦点可在任何地方，属「焦点在任何地方都要响应」的正当形态（E6#137 逐处裁决豁免）
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [visible, onOpen]);
@@ -50,6 +51,7 @@ function SearchBar({
         onNavigate(1);
       }
     };
+    // eslint-disable-next-line linkdesk/no-global-key-listener -- 搜索开着时 Escape/Enter/Ctrl+F 在焦点落在搜索栏外也要响应（用户点走后再按 Esc 仍应关搜索），属「焦点在任何地方都要响应」的正当形态（E6#137 逐处裁决豁免）
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [visible, matchCount, onClose, onNavigate]);

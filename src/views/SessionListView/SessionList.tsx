@@ -29,7 +29,6 @@ export function SessionList({
    * 新建输入框在容器外（聚焦按 F2 不触发）；重命名 InlineInput 已 stopPropagation。 */
   return (
     <div
-      className="serial-monitor-session-list"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "F2") {

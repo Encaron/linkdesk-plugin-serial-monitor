@@ -1,5 +1,12 @@
 # 更新日志
 
+## v1.0.22（2026-09-20）
+
+- **删四处死类名引用**（E6#136 普查裁决）：`serial-monitor-session-list-toolbar`／`serial-monitor-session-count`／`serial-monitor-session-list`／`serial-monitor-status-text` 在仓内 CSS 零定义、无消费（`SessionList.tsx` 的 F2 容器 `tabIndex`／`onKeyDown` 保留不动）——SDK 新腿（0.1.44 自有类名引用悬空判据）指出它们是死引用。删掉后渲染结果零变化。
+- **SearchBar 两处 window keydown 补豁免理由注释**（E6#137 普查裁决）：Ctrl+F 全局打开与搜索开着时的 Esc/Enter 属「焦点在任何地方都要响应」的正当形态（搜索框未渲染或焦点可能已点走），判据本身无白名单——按腿的豁免出口加 disable 注释写明理由，行为零变化。
+
+
+
 ## v1.0.21（2026-09-19）
 
 - **删 `.serial-monitor-sidebar` 规则本体＋收两条指向它的陈旧注释**（E6#113）：1.24（v1.0.17）已实证该类在实机 DOM 里不存在、并把 token 挪到三个真实根类之下，但规则本体留到今天；本轮删规则、退役 `SerialMonitorView.css` 的「别用它」警告、订正 `SerialMonitorSidebar.css` 头注的根类表述。删后仓内 src 零残留、`verify`／`test` 全绿。无功能变化。

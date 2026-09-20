@@ -91,7 +91,7 @@ export default function SerialMonitorStatusBar() {
           </span>
           {/* E5.8#30.12：口数 (N)——≥2 才显示数字，开 1 个只亮灯；随 connection 配置一并显隐 */}
           {openPortCount >= 2 && (
-            <span className="serial-monitor-status-text">{`(${openPortCount})`}</span>
+            <span>{`(${openPortCount})`}</span>
           )}
         </span>
       )}
