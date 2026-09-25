@@ -1,25 +1,31 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-20T00:08:14.323Z",
+  "updatedAt": "2026-09-25T16:32:31.267Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.22",
+      "version": "1.0.23",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.22/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.23/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.22/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.23/resources/icon.svg",
       "marketIconSource": "url",
       "minAppVersion": "0.2.13",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.22/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.22/serial-monitor.linkdesk-plugin",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.23/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.23/serial-monitor.linkdesk-plugin",
       "size": 159718,
-      "publishedAt": "2026-09-20T00:08:14.323Z",
+      "publishedAt": "2026-09-25T16:32:31.267Z",
       "versions": [
+        {
+          "version": "1.0.23",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.23/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-09-25T16:32:31.267Z",
+          "changelog": "- **修默认快捷发送发错字节**（E6#147 补测发现 · 用户拍板改法 a）：新会话默认那颗 `AT` 药丸，发出去的是**字面 `A T \\ r \\ n` 四个字符 ＋ 一个真 CRLF**——设备多半回 ERROR（它看到的不是 `AT` 命令行）。根因：`quickSends` 的值在发送链里是**正文**（`useSendData` 只对行尾 `ending` 做转义还原，正文原文照发），而 `DEFAULT_SESSION.quickSends` 存的却是**转义文本** `\"AT\\\\r\\\\n\"` ⇒ 值必须是正文，换行由 `handleQuickSend` / `sendInitOnOpen` 追加。\n- **改法**：两处默认值统一为 `{ AT: \"AT\" }`——`useSerialSessions/types.ts` 的 `DEFAULT_SESSION`（原转义文本）与 `SerialMonitorView/settings.ts` 的无会话兜底（原真控制符 `\"AT\\r\\n\"`，它会与追加的 CRLF 叠成双换行）。两处此前**口径相反**，现在同值（`settings.ts` 那边加了一句「与 `DEFAULT_SESSION` 同值」注释）；口径规则也写进源码与测试注释：`lineEnding` 存转义文本、`quickSends` 存正文（不带换行），别「统一」成一种。\n- **回归钉子两条**（`src/__tests__/useSendData.test.ts`）：默认值走完整发送管道 ⇒ 线上恰好 `AT\\r\\n`（值里自带换行或是转义文本都会红）＋ 无会话兜底与 `DEFAULT_SESSION` 深度同值（两处再分叉就红）。\n- **影响面**：仅**新建**会话的默认 AT 药丸。**已存会话里的旧值不受影响**（值早落在会话记录里，仍按原文发）——要改就在那颗药丸的编辑框里改一次，值即换成正文。界面与接口零变化。\n- `npm run test`（24 文件 / 262 例）与 `npm run verify` 五段全绿。"
+        },
         {
           "version": "1.0.22",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.22/serial-monitor.linkdesk-plugin",
