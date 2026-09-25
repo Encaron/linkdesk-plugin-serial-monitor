@@ -1,5 +1,13 @@
 # 更新日志
 
+## v1.0.23（2026-09-26）
+
+- **修默认快捷发送发错字节**（E6#147 补测发现 · 用户拍板改法 a）：新会话默认那颗 `AT` 药丸，发出去的是**字面 `A T \ r \ n` 四个字符 ＋ 一个真 CRLF**——设备多半回 ERROR（它看到的不是 `AT` 命令行）。根因：`quickSends` 的值在发送链里是**正文**（`useSendData` 只对行尾 `ending` 做转义还原，正文原文照发），而 `DEFAULT_SESSION.quickSends` 存的却是**转义文本** `"AT\\r\\n"` ⇒ 值必须是正文，换行由 `handleQuickSend` / `sendInitOnOpen` 追加。
+- **改法**：两处默认值统一为 `{ AT: "AT" }`——`useSerialSessions/types.ts` 的 `DEFAULT_SESSION`（原转义文本）与 `SerialMonitorView/settings.ts` 的无会话兜底（原真控制符 `"AT\r\n"`，它会与追加的 CRLF 叠成双换行）。两处此前**口径相反**，现在同值（`settings.ts` 那边加了一句「与 `DEFAULT_SESSION` 同值」注释）；口径规则也写进源码与测试注释：`lineEnding` 存转义文本、`quickSends` 存正文（不带换行），别「统一」成一种。
+- **回归钉子两条**（`src/__tests__/useSendData.test.ts`）：默认值走完整发送管道 ⇒ 线上恰好 `AT\r\n`（值里自带换行或是转义文本都会红）＋ 无会话兜底与 `DEFAULT_SESSION` 深度同值（两处再分叉就红）。
+- **影响面**：仅**新建**会话的默认 AT 药丸。**已存会话里的旧值不受影响**（值早落在会话记录里，仍按原文发）——要改就在那颗药丸的编辑框里改一次，值即换成正文。界面与接口零变化。
+- `npm run test`（24 文件 / 262 例）与 `npm run verify` 五段全绿。
+
 ## v1.0.22（2026-09-20）
 
 - **删四处死类名引用**（E6#136 普查裁决）：`serial-monitor-session-list-toolbar`／`serial-monitor-session-count`／`serial-monitor-session-list`／`serial-monitor-status-text` 在仓内 CSS 零定义、无消费（`SessionList.tsx` 的 F2 容器 `tabIndex`／`onKeyDown` 保留不动）——SDK 新腿（0.1.44 自有类名引用悬空判据）指出它们是死引用。删掉后渲染结果零变化。

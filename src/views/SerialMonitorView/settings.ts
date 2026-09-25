@@ -50,7 +50,8 @@ export function readSettings(activeSession: SerialSession | null): SerialSetting
     hexAsciiDualPane: activeSession?.hexAsciiDualPane ?? false,
     escapeInvisibleChars: activeSession?.escapeInvisibleChars ?? false,
     autoSaveReceive: activeSession?.autoSaveReceive ?? true,
-    quickSends: activeSession?.quickSends ?? { AT: "AT\r\n" },
+    // 与 DEFAULT_SESSION 同值（正文，不含换行；换行由 handleQuickSend 追加）
+    quickSends: activeSession?.quickSends ?? { AT: "AT" },
     sendInitOnOpen: activeSession?.sendInitOnOpen ?? false,
   };
 }

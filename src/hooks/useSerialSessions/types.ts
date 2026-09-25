@@ -30,7 +30,9 @@ export const DEFAULT_SESSION: Omit<SerialSession, "id" | "name" | "color"> = {
   separateSystemLog: true, lineEnding: "\\r\\n", autoRepeat: false,
   repeatInterval: 1000, autoClear: false, receiveMode: "text",
   receiveCoding: "UTF-8", sendMode: "text", sendCoding: "UTF-8",
-  quickSends: { "AT": "AT\\r\\n" },
+  // quickSends 的值是**正文**——发送链原文照发，换行由 handleQuickSend/sendInitOnOpen 追加
+  // ⇒ 别在这里写转义文本（`\r\n` 会当四个字面字符发出去）、也别自带换行（会叠成双换行）
+  quickSends: { "AT": "AT" },
 };
 
 // E5.8#6.6 hex 豁免：会话标签色板（颜色即数据——多会话轮换标签色）

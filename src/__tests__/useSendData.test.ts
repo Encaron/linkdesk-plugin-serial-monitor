@@ -11,6 +11,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { formatTimestamp, hexToBytes, useSendData } from "../utils/useSendData";
 import type { SendCallbacks, SendContext } from "../utils/useSendData";
+import { DEFAULT_SESSION } from "../hooks/useSerialSessions/types";
+import { readSettings } from "../views/SerialMonitorView/settings";
 
 function stubSerial() {
   const sendText = vi.fn(() => Promise.resolve());
@@ -181,6 +183,20 @@ describe("performSend · HEX 模式", () => {
     await result.current.performSend("41");
 
     expect(serial.sendData).toHaveBeenCalledWith([0x41], "COM_TEST_2");
+  });
+});
+
+describe("快捷发送默认值 ⇒ 线上字节（补测修复的回归钉子）", () => {
+  it("默认 AT 药丸走完整管道 ⇒ 线上恰好 AT + 一个 CRLF（值里不许自带换行，也不许是转义文本）", async () => {
+    const { serial, result } = setup();
+
+    await result.current.performSend(DEFAULT_SESSION.quickSends.AT, { ending: "\r\n", prefix: "> " });
+
+    expect(serial.sendText).toHaveBeenCalledWith("AT\r\n", "UTF-8", undefined);
+  });
+
+  it("settings 的无会话兜底与 DEFAULT_SESSION 同值（两处默认值不许再分叉）", () => {
+    expect(readSettings(null).quickSends).toEqual(DEFAULT_SESSION.quickSends);
   });
 });
 

@@ -38,10 +38,10 @@ describe("readSettings", () => {
       hexAsciiDualPane: false,
       escapeInvisibleChars: false,
       autoSaveReceive: true,
-      // ⚠️ 两条默认值的转义口径**不同**，照现状各写各的（别「统一」成一种）：
+      // ⚠️ 两条默认值的**形态口径不同**（各自消费端不同，别「统一」成一种）：
       //   lineEnding 存**转义文本**（生产侧 useSendData 发送前才 `.replace(/\\r/g,"\r")` 还原）；
-      //   quickSends 存**真控制符**（快捷发送直接当正文发）。
-      quickSends: { AT: "AT\r\n" },
+      //   quickSends 的值是**正文**（原文照发、不还原转义），换行由 handleQuickSend 追加 ⇒ 值里不带换行
+      quickSends: { AT: "AT" },
       sendInitOnOpen: false,
     });
   });
