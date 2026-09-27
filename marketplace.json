@@ -1,25 +1,31 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-25T16:32:31.267Z",
+  "updatedAt": "2026-09-27T07:10:08.588Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.23",
+      "version": "1.0.24",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.23/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.24/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.23/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.24/resources/icon.svg",
       "marketIconSource": "url",
-      "minAppVersion": "0.2.13",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.23/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.23/serial-monitor.linkdesk-plugin",
-      "size": 159718,
-      "publishedAt": "2026-09-25T16:32:31.267Z",
+      "minAppVersion": "0.2.20",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.24/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.24/serial-monitor.linkdesk-plugin",
+      "size": 162071,
+      "publishedAt": "2026-09-27T07:10:08.588Z",
       "versions": [
+        {
+          "version": "1.0.24",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.24/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-09-27T07:10:08.588Z",
+          "changelog": "- **悬停提示收编（04「悬停提示系统」件 4）**：本仓 **18 处**小写标签上的原生 `title=` 全部换成壳的 `data-hint` 属性式提示（18 处说明类 ＋ 0 处揭示类另加 `data-hint-delay=\"0\"`）；其中 **9 枚图标钮**（子代只有一枚 codicon 字形）同笔补 `aria-label`——它们原本唯一的名字来源就是那个 `title`，只换属性会让按钮变成「没名字的按钮」。\n- **为什么换**：原生 tooltip 是 Chromium 的系统 UI，壳的 CSS 碰不到——不跟主题、不跟字号；`data-hint` 走壳自绘的提示条，并自动带出该命令的快捷键（与右键菜单同一份映射）。DOM 结构、类名、可见文字零变化。\n- **`minAppVersion` 0.2.13 → 0.2.20**：提示条本体（`HintTipRenderer`）由壳提供，0.2.20 起才有——在旧壳上 `data-hint` 是惰性属性，那批按钮会**没有任何提示**（比原生 tooltip 更糟），故此版起要求应用 ≥0.2.20。\n- **`@linkdesk/plugin-sdk` ^0.1.46 → ^0.1.49**：新腿 `check-native-title` 判红原生 `title=`（本仓现为 **0 处**）——本仓的 `ci-verify` 严格档自动吃这条腿。"
+        },
         {
           "version": "1.0.23",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.23/serial-monitor.linkdesk-plugin",
