@@ -35,7 +35,7 @@ export default function SenderArea(p: SenderAreaProps) {
           <button
             className={`serial-monitor-toolbar-btn${p.showHistory ? " active" : ""}`}
             onClick={() => p.setShowHistory(!p.showHistory)}
-            title={t("发送历史")}
+            data-hint={t("发送历史")}
             disabled={p.sendHistory.length === 0}
           >
             ▼

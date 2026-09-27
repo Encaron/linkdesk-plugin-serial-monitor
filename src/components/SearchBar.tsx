@@ -83,13 +83,13 @@ function SearchBar({
       <button
         className={`serial-monitor-search-opt${caseSensitive ? " active" : ""}`}
         onClick={() => onCaseToggle(!caseSensitive)}
-        title={t("大小写敏感")}
+        data-hint={t("大小写敏感")}
       >
         Aa
       </button>
-      <button className="serial-monitor-search-nav" onClick={() => onNavigate(-1)} title={t("上一个")}><span className="codicon codicon-arrow-up" /></button>
-      <button className="serial-monitor-search-nav" onClick={() => onNavigate(1)} title={t("下一个")}><span className="codicon codicon-arrow-down" /></button>
-      <button className="serial-monitor-search-close" onClick={onClose} title={t("关闭搜索")}><span className="codicon codicon-close" /></button>
+      <button className="serial-monitor-search-nav" onClick={() => onNavigate(-1)} data-hint={t("上一个")} aria-label={t("上一个")}><span className="codicon codicon-arrow-up" /></button>
+      <button className="serial-monitor-search-nav" onClick={() => onNavigate(1)} data-hint={t("下一个")} aria-label={t("下一个")}><span className="codicon codicon-arrow-down" /></button>
+      <button className="serial-monitor-search-close" onClick={onClose} data-hint={t("关闭搜索")} aria-label={t("关闭搜索")}><span className="codicon codicon-close" /></button>
     </div>
   );
 }

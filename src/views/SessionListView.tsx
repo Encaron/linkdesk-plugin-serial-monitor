@@ -62,7 +62,7 @@ export default function SessionListView() {
       <div>
         <button
           className="serial-monitor-session-create-btn"
-          title={t("新建会话")}
+          data-hint={t("新建会话")}
           onClick={(e) => {
             e.stopPropagation();
             crud.startCreate();

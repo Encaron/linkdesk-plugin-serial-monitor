@@ -36,7 +36,7 @@ export default function QuickSendBar(p: QuickSendBarProps) {
             className="serial-monitor-quick-send-pill"
             onClick={() => p.onQuickSend(content)}
             onContextMenu={(e) => p.onCtxMenu(name, e)}
-            title={content}
+            data-hint={content}
           >
             {name}
           </button>
@@ -61,7 +61,7 @@ export default function QuickSendBar(p: QuickSendBarProps) {
             <button className="serial-monitor-toolbar-btn" onClick={() => { p.setQsAdding(false); p.setQsEditing(null); }}><span className="codicon codicon-close" /></button>
           </div>
         ) : (
-          <button className="serial-monitor-quick-send-add" title={t("添加快捷发送")} onClick={() => p.setQsAdding(true)}>
+          <button className="serial-monitor-quick-send-add" data-hint={t("添加快捷发送")} onClick={() => p.setQsAdding(true)}>
             + {t("添加")}
           </button>
         )}

@@ -29,8 +29,8 @@ export function SessionCreateInline({ inputRef, value, onChange, onConfirm, onCa
         }}
         placeholder={t("新会话名称：") ?? ""}
       />
-      <button className="serial-monitor-session-create-ok" onMouseDown={(e) => { e.preventDefault(); onConfirm(); }} title={t("确定")}><span className="codicon codicon-check" /></button>
-      <button className="serial-monitor-session-create-cancel" onMouseDown={(e) => { e.preventDefault(); onCancel(); }} title={t("取消")}><span className="codicon codicon-close" /></button>
+      <button className="serial-monitor-session-create-ok" onMouseDown={(e) => { e.preventDefault(); onConfirm(); }} data-hint={t("确定")} aria-label={t("确定")}><span className="codicon codicon-check" /></button>
+      <button className="serial-monitor-session-create-cancel" onMouseDown={(e) => { e.preventDefault(); onCancel(); }} data-hint={t("取消")} aria-label={t("取消")}><span className="codicon codicon-close" /></button>
     </div>
   );
 }

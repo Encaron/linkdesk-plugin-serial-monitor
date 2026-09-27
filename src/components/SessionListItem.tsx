@@ -90,8 +90,8 @@ export function SessionListItem({
               autoFocus
             />
           </span>
-          <button className="serial-monitor-session-create-ok" onMouseDown={(e) => { e.preventDefault(); commitRename(); }} title={t("确定")}><span className="codicon codicon-check" /></button>
-          <button className="serial-monitor-session-create-cancel" onMouseDown={(e) => { e.preventDefault(); handleRenameCancel(); }} title={t("取消")}><span className="codicon codicon-close" /></button>
+          <button className="serial-monitor-session-create-ok" onMouseDown={(e) => { e.preventDefault(); commitRename(); }} data-hint={t("确定")} aria-label={t("确定")}><span className="codicon codicon-check" /></button>
+          <button className="serial-monitor-session-create-cancel" onMouseDown={(e) => { e.preventDefault(); handleRenameCancel(); }} data-hint={t("取消")} aria-label={t("取消")}><span className="codicon codicon-close" /></button>
         </>
       ) : (
         <>
@@ -104,7 +104,7 @@ export function SessionListItem({
           <span className="serial-monitor-session-item-actions">
             <button
               className="serial-monitor-session-action-btn"
-              title={t("改名")}
+              data-hint={t("改名")} aria-label={t("改名")}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
@@ -115,7 +115,7 @@ export function SessionListItem({
             </button>
             <button
               className="serial-monitor-session-action-btn"
-              title={t("关闭会话")}
+              data-hint={t("关闭会话")} aria-label={t("关闭会话")}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();

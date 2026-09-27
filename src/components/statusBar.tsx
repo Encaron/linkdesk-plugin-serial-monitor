@@ -84,7 +84,7 @@ export default function SerialMonitorStatusBar() {
         <span className="serial-monitor-serial-status-conn">
           <span
             className="serial-monitor-serial-status-led"
-            title={isOpen ? t("已连接") : t("未连接")}
+            data-hint={isOpen ? t("已连接") : t("未连接")}
             style={{ color: isOpen ? "var(--serial-monitor-ok)" : "var(--text-muted)" }}
           >
             <span className="codicon codicon-circle-filled" />

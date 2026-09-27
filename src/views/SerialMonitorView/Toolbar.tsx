@@ -27,16 +27,16 @@ export default function Toolbar(p: ToolbarProps) {
 
   return (
     <div className="serial-monitor-toolbar">
-      <button className={`serial-monitor-toolbar-btn${p.paused ? " active" : ""}`} onClick={p.onPause} title={t("暂停接收")}>
+      <button className={`serial-monitor-toolbar-btn${p.paused ? " active" : ""}`} onClick={p.onPause} data-hint={t("暂停接收")}>
         <span className={`codicon ${p.paused ? "codicon-debug-start" : "codicon-debug-pause"}`} />
         {p.paused ? t("继续接收") : t("暂停接收")}
       </button>
 
-      <button className="serial-monitor-toolbar-btn" onClick={p.onExport} title={t("导出日志")}>
+      <button className="serial-monitor-toolbar-btn" onClick={p.onExport} data-hint={t("导出日志")}>
         <span className="codicon codicon-export" />
         {t("导出日志")}
       </button>
-      <button className="serial-monitor-toolbar-btn" onClick={p.onClear} title={t("清空接收区")}>
+      <button className="serial-monitor-toolbar-btn" onClick={p.onClear} data-hint={t("清空接收区")}>
         <span className="codicon codicon-clear-all" />
         {t("清空接收区")}
       </button>
