@@ -12,10 +12,18 @@ import { getSessionById } from "./hooks/useSerialSessions";
 import { getOpenPorts, closePortFromModule } from "./services/SerialContext";
 // E5.8#30.16（P8）：handler 非 React 环境（模块顶层注册）——用全局 i18n 实例 t()（与 useTranslation 同源）
 import i18n from "i18next";
+// M2 AI#23：插件级命令（打开/关闭端口 · 关会话 · 发送编码 · 发送 · 快发删除）——入口顶层注册。
+// 🔴 作者契约（E6#62e）：无视图时 AI 打到池内没有的命令 → 池 preload import 本入口 →
+// 顶层副作用在此把 handler 注册进去 → 重试命中。⛔ 别改成只在视图里注册（那样无视图即「命令不存在」）。
+import { registerSerialCommands } from "./services/serialCommands";
 // E6#87b：原 SerialMonitorView.css（591 行）按分节拆三件——按原级联顺序导入（外壳 → 接收 → 发送）
 import "./styles/SerialMonitorView.css";
 import "./styles/SerialMonitorView-receive.css";
 import "./styles/SerialMonitorView-send.css";
+
+// 🔴 入口顶层 = 命令常驻位（见 services/serialCommands.ts 头注）。视图卸载时的粗粒度
+// unregister 会把这批一并摘掉，故 useViewCommands 的 cleanup 里原样再调一次。
+registerSerialCommands();
 
 // E5#116: 右键菜单注册——模块顶层 IPC，单/多 WebView 统一通路。
 // ipcRenderer.invoke → main → 壳 IpcBridgeHandler → registerMenuItems → 壳的 _menus。

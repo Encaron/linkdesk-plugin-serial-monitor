@@ -6,7 +6,7 @@
  *   types.ts           —— 公共类型（PortInfo / SerialFrame / SerialState / SerialActions …）
  *   store.ts           —— 🔴 模块级 mutable 单一属主（_sharedState / _openPorts / _listeners / _portListeners）
  *   status.ts          —— mergeStatus（纯函数）
- *   ipc.ts             —— _initOnce / 监听器引用计数 / closePortFromModule
+ *   ipc.ts             —— _initOnce / 监听器引用计数 / closePortFromModule · openPortFromModule · refreshPortsFromModule
  *   useSerialContext.ts—— 主 hook（state + actions）
  *   usePortStats.ts    —— useOpenPortCount / usePortStats（per-port 只读）
  *
@@ -14,7 +14,8 @@
  */
 
 export type { PortInfo, SerialFrame, HandshakeState, SerialState, SerialActions } from "./types";
+export type { OpenPortRequest } from "./ipc";
 export { getOpenPorts } from "./store";
-export { closePortFromModule } from "./ipc";
+export { closePortFromModule, openPortFromModule, refreshPortsFromModule } from "./ipc";
 export { useSerialContext } from "./useSerialContext";
 export { useOpenPortCount, usePortStats } from "./usePortStats";

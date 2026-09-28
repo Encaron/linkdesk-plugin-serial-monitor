@@ -5,6 +5,7 @@
 import { useTranslation } from "react-i18next";
 import { FormRow, SelectBox } from "@linkdesk/ui";
 import type { SerialSession } from "../../hooks/useSerialSessions";
+import { SERIAL_CODINGS } from "../../constants";
 import type { SessionFormApi } from "./setters";
 
 export interface CodingGroupProps {
@@ -29,7 +30,7 @@ export function CodingGroup({ api, session }: CodingGroupProps) {
         />
       </FormRow>
       <FormRow label={t("接收编码")}>
-        {mkSelect("receiveCoding", ["UTF-8", "GB2312", "Shift-JIS", "Latin-1"])}
+        {mkSelect("receiveCoding", [...SERIAL_CODINGS])}
       </FormRow>
       <FormRow label={t("发送模式")}>
         <SelectBox
@@ -44,7 +45,7 @@ export function CodingGroup({ api, session }: CodingGroupProps) {
       <FormRow label={t("发送编码")}>
         <SelectBox
           value={session.sendCoding}
-          options={["UTF-8", "GB2312", "Shift-JIS", "Latin-1"]}
+          options={[...SERIAL_CODINGS]}
           onChange={(v) => mkSetter("sendCoding")(v)}
           disabled={session.sendMode === "hex"}
         />

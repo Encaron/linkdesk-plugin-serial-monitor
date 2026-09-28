@@ -18,6 +18,7 @@
     "@codemirror/search": "^6.7.1",
     "@codemirror/state": "^6.7.1",
     "@codemirror/view": "^6.43.6",
+    "@linkdesk/contracts": "^0.1.23",
     "@linkdesk/ui": "^0.2.13"
   },
   "devDependencies": {

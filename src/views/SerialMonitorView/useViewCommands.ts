@@ -2,7 +2,8 @@
  * 视图命令注册（数据/剪贴板族）——E6#87b 从 src/index.tsx 的 SerialMonitorView 搬出（只搬不改）。
  *
  * Phase 5b：注册终端命令真实 handler（覆盖 loader 的 placeholder）。
- * 本文件 = 发送 / 复制 / 全选 / 清空 / 快捷发送 / 导出日志；开关类命令在 useToggleCommands。
+ * 本文件 = 复制 / 全选 / 清空 / 快捷发送 / 导出日志；开关类命令在 useToggleCommands。
+ * 「发送」与端口/会话族命令**不在这里**——它们不依赖视图，住 `services/serialCommands.ts`（M2 AI#23）。
  *
  * 清理归口：最后一个串口监视器标签页关闭时 unregisterCommands（#36k2）——放本文件（同批 effect 最先声明者）。
  */
@@ -11,8 +12,8 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { clearAllDecos } from "../../cm6/decorations";
 import { saveFilePicker } from "../../utils/saveFile";
-import { SEND_MODE_HEX } from "../../constants";
 import { _cmdMap, getActiveCmd } from "../../services/commandBridge";
+import { registerSerialCommands } from "../../services/serialCommands";
 
 export function useViewCommands() {
   const { t } = useTranslation();
@@ -26,21 +27,6 @@ export function useViewCommands() {
     // 显示 i18n 标题），toggle 命令的最终动态标题由下方 per-state effect 重注册覆盖。
     const cat = t("串口监视器");
 
-    // E3j #79：发送能力——工作台卡片等插件通过命令系统发数据到串口。
-    // when:"false" = 纯程序化命令——不进命令面板，仅供插件 API 调用（E5.6 同款）。
-    reg("serial-monitor.send", async (sendMode: "text" | "hex", data: string, portName?: string) => {
-      if (!data) return;
-      const s = lk?.serial;
-      if (!s) return;
-      // E5.8#30.8（P2）：显式传口——程序化命令调用方可传第三参定向指定口；
-      // 不传走 D2 缺省唯一口语义（兼容旧调用方/工作台卡片无口上下文场景）
-      if (sendMode === SEND_MODE_HEX) {
-        const bytes = data.split(/[\s,]+/).filter(Boolean).map((h: string) => parseInt(h, 16));
-        await s.sendData(bytes, portName);
-      } else {
-        await s.sendText(data, "utf-8", portName);
-      }
-    }, { title: t("发送"), category: cat, when: "false" });
     reg("serial-monitor.copy", async () => {
       const view = getActiveCmd()!.cmView.current;
       if (!view) return;
@@ -111,6 +97,11 @@ export function useViewCommands() {
     return () => {
       if (_cmdMap.size <= 1) {
         lk?.commands?.unregisterCommands?.("serial-monitor");
+        // M2 AI#23：上面那句是**粗粒度**的（`unregisterCommands(pluginId)` 按属主整片摘，
+        // 没有单条版）——插件级命令（端口/会话/发送族，入口顶层注册）被一并摘掉了。
+        // 原样补回：它们是模块级单例（_openPorts/_store.sessions）的命令面，与视图在场与否无关。
+        // ⚠️ 补回走的是同一份 registerSerialCommands——⛔ 别在这里手写第二条注册链（两份迟早分叉）。
+        registerSerialCommands();
       }
     };
   }, [t]);

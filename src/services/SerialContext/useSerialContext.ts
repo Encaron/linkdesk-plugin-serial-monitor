@@ -9,10 +9,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { HandshakeState, SerialActions, SerialFrame, SerialState } from "./types";
 import {
   _notifyPort, _setState, _subscribe, _writePortState,
-  deleteOpenPort, getSharedState, hasOpenPort, setOpenPort,
+  deleteOpenPort, getSharedState, hasOpenPort,
 } from "./store";
-import { mergeStatus } from "./status";
-import { _initOnce, _registerIPCListeners, _unregisterIPCListeners, closePortFromModule } from "./ipc";
+import {
+  _initOnce, _registerIPCListeners, _unregisterIPCListeners,
+  closePortFromModule, openPortFromModule, refreshPortsFromModule,
+} from "./ipc";
 
 export function useSerialContext(): { state: SerialState; actions: SerialActions } {
   const s = window.linkdesk?.serial;
@@ -45,21 +47,9 @@ export function useSerialContext(): { state: SerialState; actions: SerialActions
     if (!s) return;
     sourceNameRef.current = portName;
     baudRateRef.current = String(baudRate);
-    // E5.8#30.17：帧格式透传——openPortConfig dataBits/stopBits/parity（wire 已支持，#26 实锤）
-    await s.openPort({ portName, baudRate, encoding, dataBits: frame?.dataBits, stopBits: frame?.stopBits, parity: frame?.parity });
-    // E5.8#30.18：打开时应用握手信号初始电平（DTR/RTS）——非致命，失败只记日志不阻断开串口
-    if (handshake) {
-      s.setDtr?.(handshake.dtr, portName).catch((e) => console.error("[serial-monitor] 应用 DTR 初始电平失败:", e));
-      s.setRts?.(handshake.rts, portName).catch((e) => console.error("[serial-monitor] 应用 RTS 初始电平失败:", e));
-    }
-    // E5.8#27：定向取刚开的口——多口下 getStatus()[0] 未必是本次开的（#26 遗留，D5 定向修复）
-    const fresh = (await s.getStatus(portName));
-    // E5.8#54：set 挪到 _setState 前——对齐 closePortFromModule（delete→setState→notify→write），
-    // 消除「开一关一不对称」：订阅 _openPorts 的瞬时读不再拿到旧态
-    setOpenPort(portName, { baudRate, txBytes: 0, rxBytes: 0 });
-    if (fresh) _setState((p) => mergeStatus(p, fresh));
-    _notifyPort(portName); // E5.8#30.12：打开 → 接收区 per-tab 计数从 0 起
-    _writePortState(portName, true); // E5.8#30.9：打开按口显式亮灯
+    // 与 closePort 同款归一：打开链（openPort → 握手 → getStatus → 权威态 → 投影 → per-port → 灯）
+    // 收在模块级咽喉 openPortFromModule——命令 handler（非 React 上下文）走的是同一条链
+    await openPortFromModule({ portName, baudRate, encoding, frame, handshake });
   }, [s]);
 
   const closePort = useCallback(async (port: string) => {
@@ -132,11 +122,9 @@ export function useSerialContext(): { state: SerialState; actions: SerialActions
 
   // 支线：刷新可用串口列表——USB 热插拔后下拉框即时更新
   const refreshPorts = useCallback(async () => {
-    if (!s) return;
-    const listPorts = s.listPorts;
-    const ports = await listPorts?.();
-    if (ports) _setState((p) => ({ ...p, ports }));
-  }, [s]);
+    // 与打开/关闭同款归一：拉列表 + 写投影的链收在模块级咽喉（命令 handler 共用同一条）
+    await refreshPortsFromModule();
+  }, []);
 
   return { state, actions: { toggleOpen, openPort, closePort, setSourceName, setBaudRate, setFrame, setDtr, setRts, refreshPorts } };
 }

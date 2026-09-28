@@ -7,12 +7,15 @@
  *   store.ts            —— 🔴 模块级 mutable 单一属主（_store / _sessionListeners / _lastLocalSnapshot）+ 持久化写入
  *   persist.ts          —— 快照恢复（localStorage 同步 → pluginState 异步 → 跨 WebView 广播订阅）
  *   useSerialSessions.ts—— useSerialSessions / useSession
- *   getters.ts          —— 模块级 getter（非 React 环境消费）
+ *   getters.ts          —— 模块级 getter + 会话写入咽喉（createSessionModule / removeSessionById，非 React 环境消费）
  */
 
 export type { SerialSession } from "./types";
 export { useSerialSessions, useSession } from "./useSerialSessions";
-export { getActiveSessionId, setActiveSessionId, getSessionById, updateSessionById } from "./getters";
+export {
+  getActiveSessionId, setActiveSessionId, getSessionById, updateSessionById,
+  getSessions, createSessionModule, removeSessionById,
+} from "./getters";
 
 import { useSerialSessions } from "./useSerialSessions";
 export default useSerialSessions;

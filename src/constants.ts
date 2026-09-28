@@ -18,3 +18,8 @@ export const SEND_EDITOR_MIN_HEIGHT = 32;
 // （BinaryExpression > Literal 小写字面量全量拦截）+ 单点真相源
 export const SEND_MODE_TEXT = "text";
 export const SEND_MODE_HEX = "hex";
+
+/** 收发编码可选集——**单点真相源**：侧栏「收发设置」两个下拉（接收/发送编码）与命令面
+ *  `serial-monitor.setSendCoding` 的取值校验都读这一份（⛔ 别再写第二份数组：
+ *  两处一旦分叉，「命令设得进、下拉选不出」就是新的不一致）。 */
+export const SERIAL_CODINGS = ["UTF-8", "GB2312", "Shift-JIS", "Latin-1"];

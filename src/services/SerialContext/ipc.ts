@@ -14,7 +14,7 @@
  *    在此文件单一属主：`_oneTimeFetched` / `_refCount` / `_ipcCleanups`。
  */
 
-import type { PortInfo } from "./types";
+import type { HandshakeState, PortInfo, SerialFrame } from "./types";
 import { mergeStatus } from "./status";
 import {
   accumulatePortStats, _notifyPort, _setState, _writePortState,
@@ -123,4 +123,62 @@ export async function closePortFromModule(port: string): Promise<void> {
   _setState((p) => ({ ...p, isOpen: false }));
   _notifyPort(port);
   _writePortState(port, false);
+}
+
+/** 打开端口的入参——会话字段（UI 侧）到 wire OpenPortConfig 的一层收敛 */
+export interface OpenPortRequest {
+  portName: string;
+  baudRate?: number;
+  encoding?: string;
+  frame?: SerialFrame;
+  handshake?: HandshakeState;
+}
+
+/**
+ * 打开端口的模块级咽喉——React action `openPort` 与命令 handler 共用（与 `closePortFromModule`
+ * 对称：一开一关各一个写入咽喉，审视 ②）。
+ *
+ * 🔴 **顺序逐字照抄 UI 版**（`useSerialContext` 的 openPort）——那是侧栏灯 / 会话面板 / per-port
+ *   计数三处一起动的那条链，任何一步调换都会让「命令开的口」与「手点开的口」表现不同：
+ *   `s.openPort` → 握手电平 → `getStatus(定向)` → `setOpenPort`（权威态）→ `_setState`（投影）
+ *   → `_notifyPort`（per-port 计数/接收区）→ `_writePortState`（**侧栏灯真相源**）。
+ *
+ * ⛔ 命令 handler **不许**直调 `linkdesk.serial.openPort` 绕过本函数——那样口开了、灯不亮、
+ *    会话面板不知道，正是「AI 开了口、界面不知道」的新不一致。
+ *
+ * @returns 真发起了打开（false = 无 serial 面/无端口名，未动任何状态）
+ */
+export async function openPortFromModule(o: OpenPortRequest): Promise<boolean> {
+  const s = window.linkdesk?.serial;
+  if (!s || !o.portName) return false;
+  const portName = o.portName;
+  const baudRate = o.baudRate ?? 115200;
+  // E5.8#30.17：帧格式透传——dataBits/stopBits/parity（wire 已支持）
+  await s.openPort({
+    portName, baudRate, encoding: o.encoding,
+    dataBits: o.frame?.dataBits, stopBits: o.frame?.stopBits, parity: o.frame?.parity,
+  });
+  // E5.8#30.18：打开时应用握手信号初始电平（DTR/RTS）——非致命，失败只记日志不阻断开串口
+  if (o.handshake) {
+    s.setDtr?.(o.handshake.dtr, portName).catch((e) => console.error("[serial-monitor] 应用 DTR 初始电平失败:", e));
+    s.setRts?.(o.handshake.rts, portName).catch((e) => console.error("[serial-monitor] 应用 RTS 初始电平失败:", e));
+  }
+  // E5.8#27：定向取刚开的口——多口下 getStatus()[0] 未必是本次开的
+  const fresh = await s.getStatus(portName);
+  // E5.8#54：set 挪到 _setState 前——对齐 closePortFromModule（delete→setState→notify→write）
+  setOpenPort(portName, { baudRate, txBytes: 0, rxBytes: 0 });
+  if (fresh) _setState((p) => mergeStatus(p, fresh));
+  _notifyPort(portName);
+  _writePortState(portName, true);
+  return true;
+}
+
+/** 刷新可用串口列表——React action `refreshPorts` 与命令 handler 共用（同一咽喉，同 #30.9 归一性口径）。
+ *  返回拉到的列表（命令 handler 要用它做「无口时选第一个可用口」，与 ControlPanel 同判据）。 */
+export async function refreshPortsFromModule(): Promise<PortInfo[]> {
+  const s = window.linkdesk?.serial;
+  if (!s) return [];
+  const ports = (await s.listPorts?.()) ?? [];
+  if (ports) _setState((p) => ({ ...p, ports }));
+  return ports;
 }
