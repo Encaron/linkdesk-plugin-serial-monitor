@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-28T16:55:56.570Z",
+  "updatedAt": "2026-09-28T17:16:52.395Z",
   "plugins": [
     {
       "id": "serial-monitor",
@@ -17,13 +17,13 @@
       "minAppVersion": "0.2.20",
       "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.25/README.md",
       "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.25/serial-monitor.linkdesk-plugin",
-      "size": 162071,
-      "publishedAt": "2026-09-28T16:55:56.570Z",
+      "size": 168125,
+      "publishedAt": "2026-09-28T17:16:52.395Z",
       "versions": [
         {
           "version": "1.0.25",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.25/serial-monitor.linkdesk-plugin",
-          "publishedAt": "2026-09-28T16:55:56.570Z",
+          "publishedAt": "2026-09-28T17:16:52.395Z",
           "changelog": "- **补一批「只有鼠标路径」的动作：打开端口 / 关端口 / 关会话 / 改发送编码 / 快捷发送编辑删除**（M2 AI 友好化 · `AI#23`）。这五件事此前各自只有一个入口——打开端口是控制面板的按钮＋下拉、关会话是**悬停才出现**的那颗 ✕、快捷发送编辑/删除是药丸右键菜单、发送编码是侧栏下拉。命令面补齐后，AI 与外部调用方（`linkdeskctl exec` / MCP）也能做这些事。\n- **声明面 12 → 17 条**：新增 `serial-monitor.openPort`（可指定 COM ＋ 波特率 ＋ 帧格式，即用户点名的「让 AI 选串口和波特率」）、`closePort`、`closeSession`、`setSendCoding`、`send`（此前只在运行时注册、清单里没有）五条；同时给**全部 17 条**补上 `description`（此前 12 条一条都没有）——命令说明随 `getCommands()` / `describe` 出契约，AI 靠它才知道这条命令干什么。`params` 声明补在需要实参的那几条上。\n- 🔴 **命令本体走插件自己的写入咽喉，不绕过插件**：`openPortFromModule` / `closePortFromModule` / 会话写入咽喉（`getters.ts`）——与界面手点是**同一条链**，侧栏灯（`pluginState <port>:isOpen` ＋ contextKey `serial-monitor.sourceOpen`）、会话表、`serial.system` 消息三处一起动。⛔ 直调 `linkdesk.serial.openPort` 会「口开了、灯不亮、会话面板不知道」——那正是本版要防的新不一致。\n- **归口**：新文件 `src/services/serialCommands.ts` 收「不需要视图在场」的插件级命令，由 `src/index.tsx` **入口顶层**注册（无视图时 AI 打进来，池的 on-command 激活 import 入口即命中）。⚠️ 视图卸载时的 `unregisterCommands` 是**粗粒度**的，会把入口顶层那批一并摘掉 ⇒ `useViewCommands` 的 cleanup 里**原样再调一次**同一份注册函数（幂等）——不补这一步，最后一个串口标签页关掉后这批命令会永久消失。\n- **顺手归一化，不留第二份实现**：`openPort` / `refreshPorts` 的 React action 与会话的 create/remove 改为委托到同一处模块级咽喉；发送编码取值抽成 `SERIAL_CODINGS`（下拉与命令同一个值集，防「命令设得进、下拉选不出」）；`send` 补 `encoding` 实参（不传则用目标会话的发送编码），`portName` 缺省仍走原来的「缺省唯一口」语义——旧调用方一个字没改。\n- **关会话的确认口径与手点一致**：`serial-monitor.confirmOnClose` 开着且未传 `confirm` 时先弹确认框；用户不点头 = 不做，且**如实回** `{closed:false, denied:true}`（不是「账面无错、实际没做」）。程序化调用方可传 `confirm:true` 跳过——否则无人应答的模态会把 AI 调用挂死。\n- **回归钉子**（新文件 `src/__tests__/serialCommands.test.ts`，19 例）：① 三处一起动——命令开的口，灯 ＋ 会话表 ＋ `serial.system` 消息面逐条与手点一致，并断言**命令腿与手点腿的灯写序列逐字相同**（顺序敏感）；② **负控**——直调 `linkdesk.serial.openPort` 必须不绿（口开了但三处一处没动），这条防的就是「只断言口开了」的假绿。另覆盖：已开再开＝不动、无可用口如实报错、关会话的三步顺序、否认路径、编码白名单、`send` 的编码优先级、无视图删快捷发送、编辑快捷发送给可读报错（不是 null 解引用）。\n- **依赖**：显式声明 `@linkdesk/contracts ^0.1.23`（原先靠 `@linkdesk/plugin-sdk` 传递拿到 0.1.13）——`meta.description` / `meta.params` 这两个字段的**类型面** 0.1.13 还没有，壳侧早就在用（`preload-pool/commands.ts`），不升级就是类型错、且旧类型会让人误以为这字段不存在。\n- 无视觉变化。⚠️ 新增命令挂 `when: \"activeEditor == 'serial-monitor'\"` 只影响**命令面板显隐**；AI / CLI 执行不看 `when`（壳侧白名单只查命令 id 是否存在）。\n- 读数：`npm run test` 25 文件 / 281 例全绿；`npm run verify` 六段全绿（声明面 17 名归属零偏离、字典 133 key）。"
         },
         {
