@@ -10,6 +10,8 @@ import { useIpcEvent } from "../../hooks/useIpcEvent";
 import type { SerialDataPayload, SerialSystemPayload } from "@linkdesk/contracts";
 import { matchesPort } from "../../utils/portFilter";
 import { formatTimestamp } from "../../utils/useSendData";
+// AI#64：HEX 换算上移到 utils/text——接收日志（给 AI 的 `hex`）与视图 HEX 栏共用同一份实现
+import { toHexDisplay } from "../../utils/text";
 import type { RingBuffer } from "../../utils/RingBuffer";
 import type { ReceiveItem } from "../../types";
 
@@ -25,15 +27,6 @@ export interface SerialIpcEventsOptions {
   pausedBuffer: React.MutableRefObject<ReceiveItem[]>;
   setPaused: (v: boolean) => void;
   setPausedCount: (v: number) => void;
-}
-
-/** 文本转十六进制显示——Phase 5e receiveMode="hex" */
-function toHexDisplay(text: string): string {
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(text);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).toUpperCase().padStart(2, "0"))
-    .join(" ");
 }
 
 export function useSerialIpcEvents(o: SerialIpcEventsOptions): void {

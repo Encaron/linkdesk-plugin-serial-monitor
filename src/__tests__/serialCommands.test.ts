@@ -117,22 +117,25 @@ function resetWorld(): void {
 beforeEach(resetWorld);
 
 describe("命令注册面", () => {
-  it("7 条插件级命令全部注册（五条新声明的 ＋ 两条快捷发送常驻腿）", () => {
+  it("9 条插件级命令全部注册（七条动作/会话 ＋ 两条接收面读数）", () => {
     // ⚠️ 声明面的 `description` / `params` 覆盖**不在这里断言**：本仓 tsconfig 不带 node 类型，
     //    读 `plugin.json` 会引入 `node:fs` / `process` 的类型错。那条判据的机械尺子是
     //    壳仓 `scripts/audit-plugin-commands.mjs`（AI#28）——跨仓验收时跑它，别在本文件写第二把。
-    expect(registerSerialCommands()).toBe(7);
+    expect(registerSerialCommands()).toBe(9);
     for (const id of [
       "serial-monitor.openPort", "serial-monitor.closePort", "serial-monitor.closeSession",
       "serial-monitor.setSendCoding", "serial-monitor.send",
       "serial-monitor.quickSendEdit", "serial-monitor.quickSendDelete",
+      "serial-monitor.readSince", "serial-monitor.receiveStatus",
     ]) {
       expect(handlers.has(id), `${id} 未注册`).toBe(true);
     }
   });
 
-  it("send 是 when:false 的程序化命令（不进命令面板），其余四条挂 activeEditor 门", () => {
+  it("send 与两条接收面读数是 when:false 的程序化命令（不进命令面板），其余四条挂 activeEditor 门", () => {
     expect(metas.get("serial-monitor.send")?.when).toBe("false");
+    expect(metas.get("serial-monitor.readSince")?.when).toBe("false");
+    expect(metas.get("serial-monitor.receiveStatus")?.when).toBe("false");
     for (const id of ["serial-monitor.openPort", "serial-monitor.closePort", "serial-monitor.closeSession", "serial-monitor.setSendCoding"]) {
       expect(metas.get(id)?.when).toBe("activeEditor == 'serial-monitor'");
     }

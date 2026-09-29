@@ -16,6 +16,9 @@ import i18n from "i18next";
 // 🔴 作者契约（E6#62e）：无视图时 AI 打到池内没有的命令 → 池 preload import 本入口 →
 // 顶层副作用在此把 handler 注册进去 → 重试命中。⛔ 别改成只在视图里注册（那样无视图即「命令不存在」）。
 import { registerSerialCommands } from "./services/serialCommands";
+// M2 AI#64：接收日志的订阅——**必须在这里**（入口顶层，与命令注册并排）：AI 的闭环第一腿
+// openPort 常常发生在没有任何串口标签页在场时，挂视图生命周期就收不到回声（见 receiveLog 头注）。
+import { ensureReceiveLogSubscribed } from "./services/receiveLog";
 // E6#87b：原 SerialMonitorView.css（591 行）按分节拆三件——按原级联顺序导入（外壳 → 接收 → 发送）
 import "./styles/SerialMonitorView.css";
 import "./styles/SerialMonitorView-receive.css";
@@ -24,6 +27,8 @@ import "./styles/SerialMonitorView-send.css";
 // 🔴 入口顶层 = 命令常驻位（见 services/serialCommands.ts 头注）。视图卸载时的粗粒度
 // unregister 会把这批一并摘掉，故 useViewCommands 的 cleanup 里原样再调一次。
 registerSerialCommands();
+// AI#64：接收日志订阅（幂等；返回 false = 无串口面，readSince 会如实回 no-serial-face）
+ensureReceiveLogSubscribed();
 
 // E5#116: 右键菜单注册——模块顶层 IPC，单/多 WebView 统一通路。
 // ipcRenderer.invoke → main → 壳 IpcBridgeHandler → registerMenuItems → 壳的 _menus。

@@ -1,5 +1,17 @@
 # 更新日志
 
+## v1.0.26（2026-09-29）
+
+- **AI 现在能把串口回声读回来了**（M2 AI 友好化 · `AI#64`）：新增两条**拉取式**读数命令——`serial-monitor.readSince`（入参 `since`/`limit`/`portName`，回 `{items, cursor, count, lost}`，每条 item 带 `seq`/`portName`/`text`/`hex`/`ts`）与 `serial-monitor.receiveStatus`（水位：`cursor`/`first`/`count`/`capacity` ＋ 每口 `{portName, count, open}`）。此前门③（CLI/MCP）的操作全是同步一问一答，AI 能开端口、能发指令，却**读不到设备回的什么**——调试闭环（发一条 → 读回声 → 据此算下一组参数 → 再发）断在最后一步。⛔ 不开流式订阅（不破「白名单 = 请求/响应」的形状）、⛔ 不走剪贴板、⛔ 不让 AI 自己开串口（COM 口仍由本软件独占持有）。
+- **机制：接收面的第二个 sink**（新文件 `src/services/receiveLog.ts`）。原接收链是**视图作用域**的——`useSerialIpcEvents` 的订阅随视图挂载/卸载，数据落在 per-view `RingBuffer` 里且**被消费即清**（rAF 抽干后进 CM6）⇒ 没有串口标签页时，进来的数据**一个字节都不留**。新 sink ＝ **模块级**订阅 ＋ 一份**保留式**环形日志（容量 `RECEIVE_LOG_MAX` = 2000 条），由 `src/index.tsx` **入口顶层**订阅（与命令注册同处：AI 的第一腿 `openPort` 常常发生在没有任何串口标签页的时候）。两条链并存——壳的 `events.on` 是**每个订阅者一条独立 `ipcRenderer.on`**（`electron/ipc/event-system.ts`），模块级订阅不会抢走视图的事件（单测有共存钉子）。订阅**故意不随视图卸载退订**：它跟的是池页面（模块）寿命，不是视图寿命。
+- **游标语义与诚实读数**：回执里的 `cursor` = 本次最后一条的 `seq`（无新数据 = 原样回你传的那个，便于原样续读）；`lost` = 因滚出缓冲而**读不到**的条数（大于 0 说明你落后了）——「答不上却看着像答了」在这条命令上被显式挡住。池页面重载后 `seq` 从 0 重来、而 AI 手里还攥着旧游标（会**静默饿死**）⇒ 显式负回执 `{ok:false, noop:true, reason:"cursor-ahead", cursor}` 把可用游标递回去。回执三态照壳的房规：**做成了** `{ok:true, …}` ／ **没有新数据** `{ok:true, noop:true, reason:"no-new-data"}` ／ **调用不成立** `{ok:false, noop:true, reason:"bad-since"|"bad-limit"|"bad-port"|"cursor-ahead"}`——参数错**照常 resolve**（抛出去会变成用户看得见、却无从下手的红条）。
+- **`receiveStatus` 的口开态读主进程真源**：`window.linkdesk.serial.getStatus()` 返回数组时以它为准，仅在该 API 缺失时才退回插件本地的 `_openPorts`——本地那张表在池页面重载后会陈旧，据此判「口开着但设备没说话」会误判。AI 用它分辨「口没开」与「开了但没数据」，再决定拉不拉。
+- **归一化：HEX 只有一份实现**——`toHexDisplay` 从 `useSerialIpcEvents.ts` 上移到 `src/utils/text.ts`（视图的 HEX 列与 AI 读到的 `item.hex` 共用同一个，防两处转义口径漂移）。
+- **声明面 17 → 19 条**：两条新命令带完整 `description`（含三态回执与 `lost` 的说明）与 `params`；`when: "false"`——**纯程序化命令，不进命令面板**，与 `send` 同例（AI / CLI 执行不看 `when`）。
+- **版本号**：`package.json` 1.0.21 → **1.0.26**（与 `plugin.json` 拉平——此前已漂移 4 个版本，AGENTS.md §6 要求两者同值，本版一并纠平）。
+- 无视觉变化、零新配置项、零新 IPC、壳侧零改动；`@linkdesk/plugin-sdk` 仍 ^0.1.52（实测 `description` / `params` / `when:"false"` 已过 0.1.52 的 schema，无需为两行声明升 SDK）。
+- 读数：`npm run test` 26 文件 / 304 例全绿（新 `receiveLog.test.ts` 23 例）；`npm run verify` 六段全绿（声明面 19 名归属零偏离、字典 135 key）。
+
 ## v1.0.25（2026-09-28）
 
 - **补一批「只有鼠标路径」的动作：打开端口 / 关端口 / 关会话 / 改发送编码 / 快捷发送编辑删除**（M2 AI 友好化 · `AI#23`）。这五件事此前各自只有一个入口——打开端口是控制面板的按钮＋下拉、关会话是**悬停才出现**的那颗 ✕、快捷发送编辑/删除是药丸右键菜单、发送编码是侧栏下拉。命令面补齐后，AI 与外部调用方（`linkdeskctl exec` / MCP）也能做这些事。

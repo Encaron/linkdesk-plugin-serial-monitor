@@ -9,6 +9,8 @@
   "关闭端口": "Close Port",
   "关闭串口会话": "Close Serial Session",
   "设置发送编码": "Set Send Encoding",
+  "读取接收数据": "Read Received Data",
+  "接收面水位": "Receive Buffer Status",
   "复制": "Copy",
   "全选": "Select All",
   "清空接收区": "Clear Receive",

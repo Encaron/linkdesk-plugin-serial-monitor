@@ -11,6 +11,12 @@ export const CM6_TRIM_KEEP_LINES = 500;
 export const RING_BUFFER_CAPACITY = 512;
 export const PAUSED_BUFFER_MAX = 2000;
 export const SEND_HISTORY_MAX = 20;
+/** 接收日志（`AI#64` 拉取式命令的留存窗）容量——与 `PAUSED_BUFFER_MAX` 同量级：那是「界面重放」
+ *  的上限，这是「AI 回读」的上限，两个数各自独立（一个是显示缓冲、一个是读数窗口，⛔ 别合并成一个）。 */
+export const RECEIVE_LOG_MAX = 2000;
+/** `readSince` 缺省取几条 / 单次上限——上限防「一条命令拉走整个缓冲」把回执撑爆（AI 应循环拉）。 */
+export const RECEIVE_READ_LIMIT_DEFAULT = 200;
+export const RECEIVE_READ_LIMIT_MAX = 1000;
 export const HEX_WARNING_MAX_CHARS = 5;
 export const SEND_EDITOR_MAX_HEIGHT = 80;
 export const SEND_EDITOR_MIN_HEIGHT = 32;

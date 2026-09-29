@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@linkdesk/plugin-sdk/schemas/plugin.schema.json",
   "pluginId": "serial-monitor",
   "name": "串口监视器",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "minAppVersion": "0.2.20",
   "icon": "resources/icon-bar.svg",
   "marketIcon": "resources/icon.svg",
@@ -110,7 +110,16 @@
           { "name": "data", "type": "string", "required": true, "description": "文本正文，或空格/逗号分隔的十六进制字节" },
           { "name": "portName", "type": "string", "description": "目标端口——缺省按唯一已打开口" },
           { "name": "encoding", "type": "string", "description": "文本编码——缺省用会话的发送编码" }
-        ] }
+        ] },
+      { "id": "serial-monitor.readSince", "title": "读取接收数据", "category": "串口监视器", "when": "false",
+        "description": "拉取式读数——把接收日志里「游标之后」的数据按到达顺序读回来（游标 = 上一次回执里的 cursor）。⛔ 不是订阅：一问一答，配 CLI/MCP 的请求/响应形状。回执三态：有新数据 {ok:true, items, cursor, count, lost} / 没有新的 {ok:true, noop:true, reason:no-new-data} / 调用不成立 {ok:false, noop:true, reason:bad-since|bad-limit|bad-port|cursor-ahead}。lost = 已滚出缓冲、读不到的条数（大于 0 说明你落后了；含他口——游标是全局面上的位置）。每条 item 带 seq / portName / text（wire 原样）/ hex / ts。无需视图在场；串口仍由本软件持有，AI 不自己开。when=false：纯程序化命令，不进命令面板。",
+        "params": [
+          { "name": "since", "type": "number", "description": "游标——上一次回执里的 cursor；缺省 0 = 从缓冲里最老一条读起" },
+          { "name": "limit", "type": "number", "description": "本次最多取几条（1–1000，缺省 200）" },
+          { "name": "portName", "type": "string", "description": "只看这个口（缺省 = 所有口）——游标仍按全局位置前进" }
+        ] },
+      { "id": "serial-monitor.receiveStatus", "title": "接收面水位", "category": "串口监视器", "when": "false",
+        "description": "读接收面的水位（不拉数据）：当前游标 cursor、缓冲里最老一条的序号 first、保留条数 count、容量 capacity，以及每口 {portName, count, open}——口开态读主进程 getStatus（真源）。AI 用它分辨「口没开」与「开了但设备没说话」，再决定拉不拉。无需视图在场。when=false：纯程序化命令，不进命令面板。" }
     ],
     "menus": {
       "editorContext": [
