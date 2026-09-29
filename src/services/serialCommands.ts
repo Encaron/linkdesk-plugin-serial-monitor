@@ -15,6 +15,11 @@
  * 「开端口 → 发 → **读回声** → 算下一组参数 → 再发」四腿里有三腿落在本文件，读数腿读的是
  * `services/receiveLog.ts` 的模块级日志（同样与视图无关，见该文件头注）。
  *
+ * `AI#67` 起再包括**会话寻址**（`listSessions` ＋ 六条会话态开关）——外部 AI 在 0.2.25 复测里
+ * 报的「开关按不动」实证是**会话不可寻址**（多串口下会话是多条并立的，命令面却只有「活跃会话」
+ * 一个隐含目标）⇒ 读面加 `listSessions`（有哪几条、谁是活跃、每条现况），写面给六条开关收
+ * `sessionId`。同一判据：会话表是模块级单例，改它不需要视图在场——所以这批也住本文件。
+ *
  * ## 🔴 作者契约（E6#62e on-command 激活）
  *
  * 无视图时 AI 经 `exec` 打到一条池内没注册的命令 → 池 preload 会 `import()` 属主插件入口
@@ -43,13 +48,16 @@ import {
   createSessionModule, getActiveSessionId, getSessionById, getSessions,
   removeSessionById, updateSessionById,
 } from "../hooks/useSerialSessions";
-import { SERIAL_CODINGS, SEND_MODE_HEX, RECEIVE_LOG_MAX, RECEIVE_READ_LIMIT_DEFAULT, RECEIVE_READ_LIMIT_MAX } from "../constants";
+import { SERIAL_CODINGS, SEND_MODE_HEX, SEND_MODE_TEXT, RECEIVE_LOG_MAX, RECEIVE_READ_LIMIT_DEFAULT, RECEIVE_READ_LIMIT_MAX } from "../constants";
 import { getOpenPorts, hasOpenPort } from "./SerialContext/store";
 import {
   closePortFromModule, openPortFromModule, refreshPortsFromModule,
 } from "./SerialContext/ipc";
+import type { PortInfo } from "./SerialContext/types";
 // AI#64：接收面读数（游标式拉取）——日志属主在 receiveLog，本文件只做参数归一 ＋ 回执成形
 import { _receiveLog, readReceiveLog, receiveLogFirst } from "./receiveLog";
+// AI#67：会话寻址读数要报「这条会话此刻有没有挂载视图」（视图态命令的可用性）——_cmdMap 是那个事实的属主
+import { _cmdMap } from "./commandBridge";
 
 /** 端口/帧格式入参——`linkdeskctl exec serial-monitor.openPort '{"portName":"COM3","baudRate":115200}'` */
 export interface OpenPortArgs {
@@ -112,15 +120,178 @@ function normalizeReadArgs(since?: unknown, limit?: unknown, portName?: unknown)
 }
 
 /**
- * 坏参回执——**载荷里出声**，⛔ 不抛异常。
+ * 坏参/坏目标回执的形状——**载荷里出声**，⛔ 不抛异常。
  *
  * 两条判例：① 壳侧读数命令（`AI#62` `readCommands.ts`）：抛异常会变成用户可见的红色 toast，而
  * 「AI 参数写错了」这件事用户当场什么也做不了；② 读命令的 `undefined`/空回执正是 `AI#62` 要消灭的
  * 「答不上却看着像答了」⇒ 必须出声，但出在**调用方读的那一层**（回执载荷）。
+ *
+ * ⚠️ `AI#67` 起**读命令与会话寻址命令共用**这一个成形处（原名 `badReadArg`——寻址腿进来后名字
+ * 只剩一半真，改名 `badArg`）：`{ok:false, noop:true, reason}` 三件套是本插件对外的统一坏回执。
  */
-function badReadArg(reason: string, error: string): { ok: false; noop: true; reason: string; error: string } {
+export interface BadReply {
+  ok: false;
+  noop: true;
+  reason: string;
+  error: string;
+}
+export function badArg(reason: string, error: string): BadReply {
   return { ok: false, noop: true, reason, error };
 }
+
+/** 现有会话的可读清单——报「找不到」时要能顺便告诉对方**有哪些**（⛔ 别让调用方再来问一次） */
+function describeSessions(): string {
+  const all = getSessions();
+  return all.length === 0 ? "（一条都没有）" : all.map((s) => `${s.name}[${s.id}]`).join("、");
+}
+
+/**
+ * 「按 id 找不到会话」的措辞——**一处来源**：`addressSession`（载荷口径）与**抛异常口径**的既有命令
+ * （`openPort`/`closePort`/`setSendCoding`/`quickSendDelete`）共用，⛔ 别各写一句（两份迟早分叉）。
+ */
+function sessionNotFoundError(sessionId: string): Error {
+  return new Error(`找不到会话 "${sessionId}"——现有：${describeSessions()}（会话清单看 serial-monitor.listSessions）`);
+}
+
+/**
+ * 寻址到「要动的那条会话」——M2 `AI#67` 会话寻址的**唯一入口**（六条开关 ＋ 视图侧暂停开关共用）。
+ *
+ * 语义（与既有 `resolveSession` 的显式 id → 活跃 → 第一条一致）：
+ *   - 给了 `sessionId` ⇒ 只认它（找不到**如实报**并列出有哪些，⛔ 不静默回退到活跃会话——
+ *     那会让「我改了会话2」变成「我改了别的会话」，正是本条要消灭的形状）；
+ *   - 没给 ⇒ 活跃会话；没有活跃 ⇒ 第一条（`AI#23` 以来的缺省语义，旧行为不变）；
+ *   - 一条会话都没有 ⇒ 坏回执 `no-session`（⛔ 不偷偷建——建会话语义归 `openPort`）。
+ */
+export function addressSession(sessionId?: unknown): { session: SerialSession } | BadReply {
+  if (sessionId !== undefined && sessionId !== null && sessionId !== "") {
+    if (typeof sessionId !== "string" || !sessionId.trim()) {
+      return badArg(
+        "bad-session",
+        `sessionId 必须是非空字符串（收到 ${JSON.stringify(sessionId)}）——会话清单看 serial-monitor.listSessions`,
+      );
+    }
+    const found = getSessionById(sessionId.trim());
+    if (!found) return badArg("bad-session", sessionNotFoundError(sessionId).message);
+    return { session: found };
+  }
+  const active = getActiveSessionId();
+  const session = (active ? getSessionById(active) : undefined) ?? getSessions()[0];
+  if (!session) {
+    return badArg("no-session", "当前一条会话都没有——先 serial-monitor.openPort 建一条（会话清单看 serial-monitor.listSessions）");
+  }
+  return { session };
+}
+
+/**
+ * 从命令实参里取 `sessionId`——两形等价：单具名对象 `{sessionId:"…"}`（声明面的那一种）
+ * 与逐位字符串 `("…")`。照 `AI#62` 壳侧 `pickStringArg` 的先例（arity=1 时壳的具名展开不开）。
+ */
+export function readSessionId(args: unknown[]): unknown {
+  const first = args[0];
+  if (first !== null && typeof first === "object" && !Array.isArray(first)) {
+    return (first as Record<string, unknown>).sessionId;
+  }
+  return first;
+}
+
+/* ── M2 `AI#67`：会话态开关的**定义表**（handler 只写一遍） ──
+ *
+ * 🔴 为什么集中成表：原先七条开关的 handler 手写在 `views/SerialMonitorView/useToggleCommands.ts`
+ *    里（连标题刷新一起，七块 × 2 处）。会话寻址进来后 handler 必须与「视图在不在场」解耦——
+ *    外面 AI 要点名改的那条会话**可能根本没开标签页**（会话表是模块级单例，比标签页活得久）
+ *    ⇒ handler 搬到插件级（本文件常驻注册），视图只留「按当前态换标题」。
+ *
+ * ⚠️ 标题文案仍是**两条**（开/关各一，key = 原文）——`titleKey(current)` 按当前值二选一，
+ *    插件级注册（`i18n.t`）与视图态重注册（`t`）**共用这一个函数**，⛔ 别在视图里再抄一份措辞。
+ */
+export type SessionToggleField = "sendMode" | "showEcho" | "showLineNumbers" | "separateSystemLog" | "autoRepeat" | "autoClear";
+
+export interface SessionToggleSpec {
+  /** 命令 id */
+  id: string;
+  /** 被翻转的会话字段——回执里用 `field` 回显它（⛔ 不用动态键：调用方要能稳定读到字段名） */
+  field: SessionToggleField;
+  /** 命令面板标题的 i18n key（按当前值二选一） */
+  titleKey: (current: unknown) => string;
+  /** 由「当前值」算「新值」 */
+  next: (current: unknown) => unknown;
+}
+
+const flipBool = (v: unknown) => v !== true;
+const altSendMode = (v: unknown) => (v === SEND_MODE_HEX ? SEND_MODE_TEXT : SEND_MODE_HEX);
+
+export const SESSION_TOGGLES: readonly SessionToggleSpec[] = [
+  {
+    id: "serial-monitor.toggleSendMode",
+    field: "sendMode",
+    titleKey: (v) => (v === SEND_MODE_HEX ? "切换到文本发送" : "切换到 HEX 发送"),
+    next: altSendMode,
+  },
+  {
+    id: "serial-monitor.toggleEcho",
+    field: "showEcho",
+    titleKey: (v) => (v === true ? "关闭消息回显" : "开启消息回显"),
+    next: flipBool,
+  },
+  {
+    id: "serial-monitor.toggleLineNumbers",
+    field: "showLineNumbers",
+    titleKey: (v) => (v === true ? "隐藏行号" : "显示行号"),
+    next: flipBool,
+  },
+  {
+    id: "serial-monitor.toggleSystemLog",
+    field: "separateSystemLog",
+    titleKey: (v) => (v === true ? "关闭系统消息独立显示" : "开启系统消息独立显示"),
+    next: flipBool,
+  },
+  {
+    id: "serial-monitor.toggleAutoRepeat",
+    field: "autoRepeat",
+    titleKey: (v) => (v === true ? "关闭自动重发" : "开启自动重发"),
+    next: flipBool,
+  },
+  {
+    id: "serial-monitor.toggleAutoClear",
+    field: "autoClear",
+    titleKey: (v) => (v === true ? "关闭自动清屏" : "开启自动清屏"),
+    next: flipBool,
+  },
+];
+
+/** 取某条开关的标题 key（按当前值）——插件级注册与视图态重注册共用 */
+export function sessionToggleTitleKey(id: string, current: unknown): string {
+  const spec = SESSION_TOGGLES.find((s) => s.id === id);
+  return spec ? spec.titleKey(current) : id;
+}
+
+/**
+ * 翻转一条开关（**按 id 定目标会话**）——回执带 `field` / `previous` / `value`。
+ *
+ * 🔴 回执给「改后的值」是本次的要点之一：旧面只回 `undefined`，门外 AI 只能从**命令面板标题**
+ *    反推状态（标题兼职当读数）——外部 AI 0.2.25 复测里那条误判就是这么来的。
+ *    回读走会话表（写入咽喉当场生效）⇒ 回执里的 `value` 是**读回来的**，不是「我打算写的那个」。
+ */
+async function runSessionToggle(spec: SessionToggleSpec, args: unknown[]): Promise<unknown> {
+  const target = addressSession(readSessionId(args));
+  if (!("session" in target)) return target;
+  const { session } = target;
+  const previous = session[spec.field];
+  updateSessionById(session.id, { [spec.field]: spec.next(previous) } as Partial<SerialSession>);
+  const after = getSessionById(session.id);
+  return {
+    ok: true,
+    sessionId: session.id,
+    name: after?.name ?? session.name,
+    field: spec.field,
+    value: after ? after[spec.field] : spec.next(previous),
+    previous,
+  };
+}
+
+/** 六条开关的 handler——**按 id 取同一条**（插件级注册与视图态标题重注册共用一处实现） */
+export const SESSION_TOGGLE_HANDLERS: Record<string, (...args: unknown[]) => Promise<unknown>> =
+  Object.fromEntries(SESSION_TOGGLES.map((spec) => [spec.id, (...args: unknown[]) => runSessionToggle(spec, args)]));
 
 /** 会话解析——显式 id → 活跃会话 → 第一个会话；都没有返回 null（不偷偷建，交给调用点决定） */
 function resolveSession(sessionId?: string): SerialSession | null {
@@ -159,6 +330,9 @@ export function registerSerialCommands(): number {
     async (args?: OpenPortArgs) => {
       const a = args ?? {};
       let session = resolveSession(a.sessionId);
+      // 🔴 AI#67：**显式点名了会话却没命中 ⇒ 如实报错**（⛔ 别顺手新建一条——那会把「我要开会话2」
+      // 变成「多出一条会话」，正是本系列反复消灭的「账面无错、其实做错了别的」）。
+      if (!session && a.sessionId) throw sessionNotFoundError(a.sessionId);
       // 一个会话都没有 → 建一个（同 useSession 的自动建会话语义——否则「打开端口」在空插件上无处落）
       if (!session) session = createSessionModule(i18n.t("会话"));
       const patch: Partial<SerialSession> = {};
@@ -199,6 +373,9 @@ export function registerSerialCommands(): number {
     "serial-monitor.closePort",
     async (args?: PortTargetArgs) => {
       const session = resolveSession(args?.sessionId);
+      // 🔴 AI#67：点名了会话却没命中 ⇒ 如实报「找不到会话」——⛔ 别退化成「未指定端口」那种
+      // 答非所问（调用方按 sessionId 点名的，就得告诉它那个 id 的问题）
+      if (!session && args?.sessionId) throw sessionNotFoundError(args.sessionId);
       const portName = args?.portName ?? session?.port ?? "";
       if (!portName) {
         throw new Error("未指定端口——会话也没绑端口（给 portName 或先选口）");
@@ -222,8 +399,10 @@ export function registerSerialCommands(): number {
           ? getSessions().find((s) => s.name === args.name)
           : resolveSession();
       if (!session) {
+        // 显式 id 没命中 ⇒ 有 id 就报那个 id（带上现有清单）——够不到 id 时才是一句「都没命中」
+        if (args?.sessionId) throw sessionNotFoundError(args.sessionId);
         const names = getSessions().map((s) => s.name).join("、") || "（无）";
-        throw new Error(`找不到会话（sessionId/name 都没有命中；现有：${names}）`);
+        throw new Error(`找不到会话（name 没命中；现有：${names}；会话清单看 serial-monitor.listSessions）`);
       }
       const isOpen = hasOpenPort(session.port);
       // 与手点同一条确认口径（配置 serial-monitor.confirmOnClose，默认开）
@@ -264,6 +443,7 @@ export function registerSerialCommands(): number {
         throw new Error(`不支持的编码 "${coding}"——可选：${SERIAL_CODINGS.join(" / ")}`);
       }
       const session = resolveSession(args?.sessionId);
+      if (!session && args?.sessionId) throw sessionNotFoundError(args.sessionId);
       if (!session) throw new Error("没有会话可设——先用 openPort 建会话，或给 sessionId");
       updateSessionById(session.id, { sendCoding: coding });
       return { sessionId: session.id, sendCoding: coding, sendMode: session.sendMode };
@@ -304,6 +484,7 @@ export function registerSerialCommands(): number {
       const key = ctx?.quickSendName;
       if (!key) throw new Error("缺少 quickSendName——要删哪一颗快捷发送");
       const session = resolveSession(ctx?.sessionId);
+      if (!session && ctx?.sessionId) throw sessionNotFoundError(ctx.sessionId);
       if (!session) throw new Error("没有会话可删快捷发送");
       if (!(key in session.quickSends)) {
         return { deleted: false, reason: "该会话没有这颗快捷发送", key, sessionId: session.id };
@@ -348,14 +529,14 @@ export function registerSerialCommands(): number {
       }
       const since = a.since ?? 0;
       if (typeof since !== "number" || !Number.isInteger(since) || since < 0) {
-        return badReadArg("bad-since", `since 必须是非负整数（收到 ${JSON.stringify(a.since)}）——缺省 0 = 从缓冲里最老一条读起`);
+        return badArg("bad-since", `since 必须是非负整数（收到 ${JSON.stringify(a.since)}）——缺省 0 = 从缓冲里最老一条读起`);
       }
       const limit = a.limit ?? RECEIVE_READ_LIMIT_DEFAULT;
       if (typeof limit !== "number" || !Number.isInteger(limit) || limit < 1 || limit > RECEIVE_READ_LIMIT_MAX) {
-        return badReadArg("bad-limit", `limit 必须是 1–${RECEIVE_READ_LIMIT_MAX} 的整数（收到 ${JSON.stringify(a.limit)}）`);
+        return badArg("bad-limit", `limit 必须是 1–${RECEIVE_READ_LIMIT_MAX} 的整数（收到 ${JSON.stringify(a.limit)}）`);
       }
       if (a.portName !== undefined && a.portName !== null && (typeof a.portName !== "string" || !a.portName.trim())) {
-        return badReadArg("bad-port", "portName 必须是非空字符串（缺省 = 所有口）");
+        return badArg("bad-port", "portName 必须是非空字符串（缺省 = 所有口）");
       }
       if (since > _receiveLog.seq) {
         // 池页面一 reload，序号从头再来 ⇒ 上一轮的游标会「超过水位」；此时若照常回空，AI 会以为
@@ -415,5 +596,98 @@ export function registerSerialCommands(): number {
     { title: i18n.t("接收面水位"), category: cat, when: "false" },
   );
 
-  return 9;
+  /* ── 可用串口清单（M2 AI#67 配套读）──
+     「会话寻址」只解决「有哪几条会话」；外部 AI 在 0.2.25 复测里另一条够不着的是**硬件面**：
+     门③ 只有 `exec`，「这台机器上插着哪几个口」在旧命令面上没有出口（`serial.listPorts` 是门② 的
+     API，池内 JS 才够得着）⇒ AI 想指定 `portName` 只能瞎猜。本命令就是那个出口，且**与界面下拉
+     同一条腿**（`refreshPortsFromModule`）：读数与 UI 不可能分叉。 */
+  reg(
+    "serial-monitor.listPorts",
+    async () => {
+      const sessions = getSessions();
+      let raw: PortInfo[] | null = null;
+      let why: string | null = null;
+      try {
+        raw = await refreshPortsFromModule();
+      } catch (e) {
+        why = e instanceof Error ? e.message : String(e);
+      }
+      // ⛔ 「问不出来」与「一个口都没有」必须分得开——两者的处置完全相反（前者查驱动/权限，后者插设备）
+      if (raw === null) {
+        return badArg("read-failed", `读串口清单失败（${why}）——这不等于一个口都没有，请查驱动/权限后重读`);
+      }
+      return {
+        ok: true,
+        count: raw.length,
+        // `open` 取插件的 per-port 权威态（侧栏灯同一份）；`sessionId` 把口与会话对上——
+        // 门前两步就齐了：先 listPorts 挑口，再拿 sessionId 走会话寻址改它。
+        ports: raw.map((p) => ({
+          portName: p.name,
+          description: p.description || null,
+          open: hasOpenPort(p.name),
+          sessionId: sessions.find((s) => s.port === p.name)?.id ?? null,
+        })),
+      };
+    },
+    { title: i18n.t("列出可用串口"), category: cat, when: "false" },
+  );
+
+  /* ── 会话寻址·读（M2 AI#67）──
+     外部 AI 在 0.2.25 复测里报「开关按不动」，实证是**会话不可寻址**：多串口下会话是多条并立的
+     （本案：会话1 的「系统消息独立显示」是开的，会话2 是关的），而命令面只有「活跃会话」一个
+     隐含目标 ⇒ 门外看不见有哪几条、更无法把会话与端口／标签页对上。本条就是那个缺口的一半。 */
+  reg(
+    "serial-monitor.listSessions",
+    async () => {
+      const sessions = getSessions();
+      return {
+        ok: true,
+        count: sessions.length,
+        activeSessionId: getActiveSessionId(),
+        sessions: sessions.map((s) => {
+          // 视图态读数的唯一来源：`_cmdMap`（每挂载一个串口视图写一格，键 = 会话 id）。
+          // ⛔ 没挂载就报 null，⛔ 不报 false 假装问过——「标签页没开」与「暂停态是假的」不是一回事。
+          const cmd = _cmdMap.get(s.id);
+          return {
+            sessionId: s.id,
+            name: s.name,
+            portName: s.port || null,
+            open: hasOpenPort(s.port),
+            viewMounted: Boolean(cmd),
+            paused: cmd ? cmd.paused : null,
+            baudRate: Number(s.baudRate || 115200),
+            sendMode: s.sendMode,
+            sendCoding: s.sendCoding,
+            receiveCoding: s.receiveCoding,
+            showEcho: s.showEcho,
+            showLineNumbers: s.showLineNumbers,
+            separateSystemLog: s.separateSystemLog,
+            autoRepeat: s.autoRepeat,
+            autoClear: s.autoClear,
+          };
+        }),
+      };
+    },
+    { title: i18n.t("列出串口会话"), category: cat, when: "false" },
+  );
+
+  /* ── 会话寻址·写：六条会话态开关（M2 AI#67）──
+     handler 住本文件（常驻，⛔ 不再随视图走）——会话表是模块级单例，比标签页活得久：AI 点名要改的
+     那条会话可能根本没开标签页。视图只负责「按当前态换标题」，见 useToggleCommands。
+     回执带 `field` / `previous` / `value`（改后回读）——⛔ 别让调用方从命令面板标题反推状态。 */
+  const toggleNow = () => {
+    const active = getActiveSessionId();
+    return (active ? getSessionById(active) : undefined) ?? getSessions()[0] ?? null;
+  };
+  for (const spec of SESSION_TOGGLES) {
+    const current = toggleNow();
+    reg(spec.id, SESSION_TOGGLE_HANDLERS[spec.id], {
+      title: i18n.t(spec.titleKey(current ? current[spec.field] : undefined)),
+      category: cat,
+      when: whenActive,
+    });
+  }
+
+  // 17 = 九条动作/读数（AI#23/AI#64）＋ 两条寻址读（listPorts/listSessions）＋ 六条会话态开关
+  return 9 + 2 + SESSION_TOGGLES.length;
 }

@@ -20,8 +20,9 @@
 import { describe, it, expect, beforeEach, beforeAll, vi } from "vitest";
 import { registerSerialCommands } from "../services/serialCommands";
 import {
-  createSessionModule, getSessionById, getSessions, updateSessionById,
+  createSessionModule, getSessionById, getSessions, setActiveSessionId, updateSessionById,
 } from "../hooks/useSerialSessions";
+import { _cmdMap, type ActiveCmd } from "../services/commandBridge";
 import { _sessionListeners, _store } from "../hooks/useSerialSessions/store";
 import {
   deleteOpenPort, getOpenPorts, getSharedState, _setState,
@@ -46,6 +47,8 @@ let systemHandler: ((p: unknown) => void) | undefined;
 const confirmMock = vi.fn(async () => true);
 /** listPorts 的可变返回——默认「一个口都没有」（本机 `SerialPort.list()` 就是空数组） */
 let portsReply: Array<{ name: string; description: string }> = [];
+/** 非空 ⇒ 假件的 `listPorts` 抛这个错（「问不出来」与「一个口都没有」是两件事，得分别造得出来） */
+let portsFail: string | null = null;
 
 /** 灯写序列——只挑 `:isOpen` 键（会话快照也写 pluginState，别把两种写混成一条序列） */
 function lampSeq(): Array<[string, string, unknown]> {
@@ -77,7 +80,10 @@ beforeAll(() => {
     closeBySourceId: (id: string) => { closeBySourceIdCalls.push(id); },
   };
   (window.linkdesk as unknown as Record<string, unknown>).serial = {
-    listPorts: async () => portsReply,
+    listPorts: async () => {
+      if (portsFail) throw new Error(portsFail);
+      return portsReply;
+    },
     openPort: async (cfg: unknown) => { openArgs.push(cfg); },
     closePort: async () => {},
     getStatus: async (port?: string) => (port ? { portName: port, baudRate: 115200, isOpen: true } : []),
@@ -101,6 +107,7 @@ function resetWorld(): void {
   _store.sessionCounter = 0;
   _store.colorIndex = 0;
   _sessionListeners.clear();
+  _cmdMap.clear();
   _setState(() => ({ ports: [], sourceName: "", baudRate: "115200", isOpen: false, lastError: null }));
   for (const p of ["COM3", "COM5", "COM9"]) deleteOpenPort(p);
   stateWrites = [];
@@ -109,6 +116,7 @@ function resetWorld(): void {
   sendTextCalls = [];
   closeBySourceIdCalls = [];
   portsReply = [];
+  portsFail = null;
   confirmMock.mockReset();
   confirmMock.mockImplementation(async () => true);
   (window as unknown as { __ldkConfigStore: Map<string, unknown> }).__ldkConfigStore.clear();
@@ -117,26 +125,35 @@ function resetWorld(): void {
 beforeEach(resetWorld);
 
 describe("命令注册面", () => {
-  it("9 条插件级命令全部注册（七条动作/会话 ＋ 两条接收面读数）", () => {
+  it("17 条插件级命令全部注册（九条动作/读数 ＋ 两条寻址读 ＋ 六条会话态开关）", () => {
     // ⚠️ 声明面的 `description` / `params` 覆盖**不在这里断言**：本仓 tsconfig 不带 node 类型，
     //    读 `plugin.json` 会引入 `node:fs` / `process` 的类型错。那条判据的机械尺子是
     //    壳仓 `scripts/audit-plugin-commands.mjs`（AI#28）——跨仓验收时跑它，别在本文件写第二把。
-    expect(registerSerialCommands()).toBe(9);
+    expect(registerSerialCommands()).toBe(17);
     for (const id of [
       "serial-monitor.openPort", "serial-monitor.closePort", "serial-monitor.closeSession",
       "serial-monitor.setSendCoding", "serial-monitor.send",
       "serial-monitor.quickSendEdit", "serial-monitor.quickSendDelete",
       "serial-monitor.readSince", "serial-monitor.receiveStatus",
+      "serial-monitor.listPorts", "serial-monitor.listSessions",
+      "serial-monitor.toggleSendMode", "serial-monitor.toggleEcho", "serial-monitor.toggleLineNumbers",
+      "serial-monitor.toggleSystemLog", "serial-monitor.toggleAutoRepeat", "serial-monitor.toggleAutoClear",
     ]) {
       expect(handlers.has(id), `${id} 未注册`).toBe(true);
     }
   });
 
-  it("send 与两条接收面读数是 when:false 的程序化命令（不进命令面板），其余四条挂 activeEditor 门", () => {
+  it("send 与四条读数是 when:false 的程序化命令（不进命令面板），其余十条挂 activeEditor 门", () => {
     expect(metas.get("serial-monitor.send")?.when).toBe("false");
     expect(metas.get("serial-monitor.readSince")?.when).toBe("false");
     expect(metas.get("serial-monitor.receiveStatus")?.when).toBe("false");
-    for (const id of ["serial-monitor.openPort", "serial-monitor.closePort", "serial-monitor.closeSession", "serial-monitor.setSendCoding"]) {
+    expect(metas.get("serial-monitor.listSessions")?.when).toBe("false");
+    expect(metas.get("serial-monitor.listPorts")?.when).toBe("false");
+    for (const id of [
+      "serial-monitor.openPort", "serial-monitor.closePort", "serial-monitor.closeSession", "serial-monitor.setSendCoding",
+      "serial-monitor.toggleSendMode", "serial-monitor.toggleEcho", "serial-monitor.toggleLineNumbers",
+      "serial-monitor.toggleSystemLog", "serial-monitor.toggleAutoRepeat", "serial-monitor.toggleAutoClear",
+    ]) {
       expect(metas.get(id)?.when).toBe("activeEditor == 'serial-monitor'");
     }
   });
@@ -348,5 +365,183 @@ describe("发送编码 / 发送 / 快捷发送", () => {
   it("quickSendEdit 无视图时给可读报错（编辑框是视图态），不是 null 解引用炸栈", async () => {
     await expect(handlers.get("serial-monitor.quickSendEdit")!({ quickSendName: "AT" }))
       .rejects.toThrow(/需要打开该会话的串口标签页/);
+  });
+});
+
+/**
+ * 会话寻址（M2 `AI#67`）——外部 AI 0.2.25 复测里那句「开关按不动」的实证：多串口下会话是多条
+ * **并立**的（会话1 的系统消息独立显示是开的、会话2 是关的），而旧命令面只有「活跃会话」一个
+ * 隐含目标 ⇒ 门外既看不见有哪几条，也无法点名改某一条。本块守两面：
+ *   读 `listSessions`（有哪几条 / 谁是活跃 / 每条现况 / 视图在不在场）
+ *   写 六条开关的 `sessionId`（点名改的就是它，⛔ 不静默落到活跃会话上）
+ */
+describe("AI#67 会话寻址：listSessions ＋ 六条开关认 sessionId", () => {
+  /** 挂一格视图态读数——真机里由 SerialMonitorView mount 写入 */
+  function mountView(id: string, paused: boolean): void {
+    _cmdMap.set(id, { paused, cmView: { current: null } } as unknown as ActiveCmd);
+  }
+
+  it("listPorts 枚举机器上的口：谁开着、在哪条会话上，且与界面下拉同一条腿", async () => {
+    const s1 = createSessionModule("会话1", "s-1");
+    updateSessionById(s1.id, { port: "COM3" });
+    portsReply = [
+      { name: "COM3", description: "USB-SERIAL CH340" },
+      { name: "COM7", description: "" },
+    ];
+    await openPortFromModule({ portName: "COM3", baudRate: 115200 });
+
+    const res = await handlers.get("serial-monitor.listPorts")!() as {
+      ok: boolean; count: number;
+      ports: Array<{ portName: string; description: string | null; open: boolean; sessionId: string | null }>;
+    };
+
+    expect(res.ok).toBe(true);
+    expect(res.count).toBe(2);
+    // 门前两步齐了：挑口（portName）＋ 拿 sessionId 去寻址；开着的那口如实报 open
+    expect(res.ports[0]).toEqual({ portName: "COM3", description: "USB-SERIAL CH340", open: true, sessionId: "s-1" });
+    expect(res.ports[1]).toEqual({ portName: "COM7", description: null, open: false, sessionId: null });
+    // 同一条腿：界面下拉读的那份共享态也被刷新（读数与 UI 不可能分叉）
+    expect(getSharedState().ports.map((p) => p.name)).toEqual(["COM3", "COM7"]);
+  });
+
+  it("一个口都没有 ⇒ 如实报空（ok:true/ports:[]），⛔ 不报错也不虚报", async () => {
+    const res = await handlers.get("serial-monitor.listPorts")!() as { ok: boolean; count: number; ports: unknown[] };
+
+    expect(res).toMatchObject({ ok: true, count: 0, ports: [] });
+  });
+
+  it("读口失败 ⇒ 载荷里出声（read-failed）——「问不出来」≠「一个口都没有」", async () => {
+    portsFail = "Access denied";
+    const res = await handlers.get("serial-monitor.listPorts")!() as {
+      ok: boolean; noop: boolean; reason: string; error: string;
+    };
+
+    expect(res.ok).toBe(false);
+    expect(res.reason).toBe("read-failed");
+    expect(res.error).toMatch(/Access denied/);
+    expect(res.error).toMatch(/不等于一个口都没有/);
+  });
+
+  it("listSessions 枚举全部会话：谁活跃、每条现况、端口开没开", async () => {
+    const s1 = createSessionModule("会话1", "s-1");
+    const s2 = createSessionModule("会话2", "s-2");
+    updateSessionById(s1.id, { port: "COM3" });
+    updateSessionById(s2.id, { port: "COM5", sendMode: "hex", separateSystemLog: false });
+    await openPortFromModule({ portName: "COM3", baudRate: 115200 }); // 只有 COM3 真开着
+    setActiveSessionId(s2.id);
+
+    const res = await handlers.get("serial-monitor.listSessions")!() as {
+      ok: boolean; count: number; activeSessionId: string | null;
+      sessions: Array<Record<string, unknown>>;
+    };
+
+    expect(res.ok).toBe(true);
+    expect(res.count).toBe(2);
+    expect(res.activeSessionId).toBe("s-2"); // 活跃 ≠ 第一条：门外的「当前」得看得见
+    expect(res.sessions.map((s) => s.sessionId)).toEqual(["s-1", "s-2"]);
+    expect(res.sessions[0]).toMatchObject({ name: "会话1", portName: "COM3", open: true, sendMode: "text" });
+    expect(res.sessions[1]).toMatchObject({ name: "会话2", portName: "COM5", open: false, sendMode: "hex", separateSystemLog: false });
+  });
+
+  it("视图没挂载 ⇒ viewMounted:false ＋ paused:null（⛔ 不报 false 假装问过）", async () => {
+    createSessionModule("会话1", "s-1");
+    mountView("s-1", true);
+
+    const res = await handlers.get("serial-monitor.listSessions")!() as {
+      sessions: Array<{ sessionId: string; viewMounted: boolean; paused: boolean | null }>;
+    };
+
+    expect(res.sessions[0]).toMatchObject({ viewMounted: true, paused: true }); // 挂载过 —— 读的是视图态快照
+    _cmdMap.clear();
+    const bare = await handlers.get("serial-monitor.listSessions")!() as typeof res;
+    // 「标签页没开」与「暂停态是假的」不是一回事——没挂载就如实说不知道
+    expect(bare.sessions[0]).toMatchObject({ viewMounted: false, paused: null });
+  });
+
+  it("⛔ 点名哪条就改哪条：给了 sessionId 的开关不落到活跃会话上（外部 AI 那条误判的正面判据）", async () => {
+    const s1 = createSessionModule("会话1", "s-1");
+    const s2 = createSessionModule("会话2", "s-2");
+    updateSessionById(s1.id, { separateSystemLog: true });
+    updateSessionById(s2.id, { separateSystemLog: false });
+    setActiveSessionId(s1.id); // 活跃 = 会话1（开的）——若按旧语义，改「会话2」会落到会话1
+
+    const res = await handlers.get("serial-monitor.toggleSystemLog")!({ sessionId: "s-2" }) as {
+      ok: boolean; sessionId: string; name: string; field: string;
+      value: boolean; previous: boolean;
+    };
+
+    // 回执自带读数（field/previous/value）——标题不用再兼职当读数
+    expect(res).toMatchObject({ ok: true, sessionId: "s-2", name: "会话2", field: "separateSystemLog", previous: false, value: true });
+    expect(getSessionById("s-2")?.separateSystemLog).toBe(true);
+    expect(getSessionById("s-1")?.separateSystemLog).toBe(true); // 活跃那条一个字节没动
+  });
+
+  it("缺省仍按旧语义走活跃会话（没给 sessionId 的老调用不受影响）", async () => {
+    const s1 = createSessionModule("会话1", "s-1");
+    const s2 = createSessionModule("会话2", "s-2");
+    updateSessionById(s2.id, { showEcho: false });
+    setActiveSessionId(s2.id);
+    const untouched = getSessionById(s1.id)?.showEcho; // 默认值随 cloneDefaults 走——比「没动」而不是猜具体值
+
+    const res = await handlers.get("serial-monitor.toggleEcho")!() as { sessionId: string; value: boolean };
+
+    expect(res).toMatchObject({ sessionId: "s-2", value: true });
+    expect(getSessionById(s1.id)?.showEcho).toBe(untouched); // 第一条没被顺手改
+  });
+
+  it("坏 sessionId ⇒ 坏回执（noop）＋现有清单，⛔ 不静默落到别的会话上", async () => {
+    createSessionModule("会话1", "s-1");
+    const untouched = getSessionById("s-1")?.showEcho;
+    const res = await handlers.get("serial-monitor.toggleEcho")!({ sessionId: "s-nope" }) as {
+      ok: boolean; noop: boolean; reason: string; error: string;
+    };
+
+    // 门外能自己纠正：错在哪、有哪些可用
+    expect(res.ok).toBe(false);
+    expect(res.noop).toBe(true);
+    expect(res.reason).toBe("bad-session");
+    expect(res.error).toMatch(/找不到会话 "s-nope"/);
+    expect(res.error).toMatch(/会话1\[s-1\]/); // 顺带把清单给了 —— 不用再来问一次
+    expect(getSessionById("s-1")?.showEcho).toBe(untouched);
+
+    // 非字符串同样如实报（⛔ 不让 42 变成「第一条会话」）
+    const bad = await handlers.get("serial-monitor.toggleEcho")!(42) as { reason: string; error: string };
+    expect(bad.reason).toBe("bad-session");
+    expect(bad.error).toMatch(/必须是非空字符串/);
+  });
+
+  it("一条会话都没有 ⇒ no-session 坏回执（⛔ 不偷偷建——建会话语义归 openPort）", async () => {
+    const res = await handlers.get("serial-monitor.toggleLineNumbers")!() as { ok: boolean; reason: string };
+
+    expect(res.ok).toBe(false);
+    expect(res.reason).toBe("no-session");
+    expect(getSessions()).toHaveLength(0);
+  });
+
+  it("六条开关同形：每条只翻自己那个字段，并回读改后的值", async () => {
+    const s = createSessionModule("会话1", "s-1");
+    const fields = ["sendMode", "showEcho", "showLineNumbers", "separateSystemLog", "autoRepeat", "autoClear"] as const;
+    const before = { ...getSessionById(s.id)! };
+
+    for (const id of [
+      "serial-monitor.toggleSendMode", "serial-monitor.toggleEcho", "serial-monitor.toggleLineNumbers",
+      "serial-monitor.toggleSystemLog", "serial-monitor.toggleAutoRepeat", "serial-monitor.toggleAutoClear",
+    ]) {
+      const res = await handlers.get(id)!({ sessionId: "s-1" }) as { ok: boolean; field: string; value: unknown; previous: unknown };
+      const field = res.field as typeof fields[number];
+      expect(fields).toContain(field);
+      // 回执里的 value 是**读回来的**（与真值一致），不是「打算写的那个」
+      expect(res.value).toBe(getSessionById("s-1")![field]);
+      expect(res.previous).toBe(before[field]);
+      expect(res.value).not.toBe(res.previous);
+    }
+
+    // 六个字段逐个都翻过了（每个都与翻前不同），其余字段仍是原值（没有哪条顺手改了别的）
+    const after = getSessionById(s.id)!;
+    expect(fields.every((f) => after[f] !== before[f])).toBe(true);
+    expect(after.name).toBe(before.name);
+    expect(after.port).toBe(before.port);
+    expect(after.sendCoding).toBe(before.sendCoding);
+    expect(after.receiveCoding).toBe(before.receiveCoding);
   });
 });
