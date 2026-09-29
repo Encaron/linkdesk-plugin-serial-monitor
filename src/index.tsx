@@ -1,6 +1,7 @@
 /**
  * 串口监视器插件入口——E6#87b：主视图搬去 views/SerialMonitorView（见该文件头注），
- * 本文件只剩**模块顶层声明式接线**（菜单项注册 + beforeClose 通道）+ default export 转出。
+ * 本文件只剩**模块顶层接线**（插件级命令注册 + 接收日志订阅 + beforeClose 通道）+ default export 转出；
+ * 右键菜单不在此注册——全走 `plugin.json` 的 `contributes.menus`（见下方「右键菜单全部走声明式」段）。
  *
  * 设计依据：[V3-Phase4-串口监视器插件化设计.md]
  */
@@ -30,20 +31,14 @@ registerSerialCommands();
 // AI#64：接收日志订阅（幂等；返回 false = 无串口面，readSince 会如实回 no-serial-face）
 ensureReceiveLogSubscribed();
 
-// E5#116: 右键菜单注册——模块顶层 IPC，单/多 WebView 统一通路。
-// ipcRenderer.invoke → main → 壳 IpcBridgeHandler → registerMenuItems → 壳的 _menus。
-// 模块顶层执行 → preload 运行在页面 JS 之前 → window.linkdesk 此时已就绪。
-// 🔥 E5.6#16.7k-fix：加 label 属性。壳 IpcBridgeHandler 的 getCommands() 查不到
-// 池侧 _poolCommands 的命令→title=undefined。有 label 时 ContextMenu t(item.label) 正常显示。
-window.linkdesk?.menu?.registerItems?.("editorContext", "serial-monitor", [
-  { command: "serial-monitor.copy", group: "clipboard", label: "复制" },
-  { command: "serial-monitor.selectAll", group: "selection", label: "全选" },
-  { command: "serial-monitor.clear", group: "edit", label: "清空" },
-]);
-window.linkdesk?.menu?.registerItems?.("quickSendContext", "serial-monitor", [
-  { command: "serial-monitor.quickSendEdit", group: "edit", label: "编辑" },
-  { command: "serial-monitor.quickSendDelete", group: "danger", label: "删除" },
-]);
+// 🔴 右键菜单**全部走声明式**（`plugin.json` 的 `contributes.menus`，加载器在插件装载时注册）——
+// 本文件**不再**运行时注册。此前 E5.6#16.7k-fix 在这里又注册了一份 editorContext / quickSendContext
+// （带 label，为绕当时壳侧解析不到池命令 title 而加）；后来声明式那份补齐，两份并存 ⇒
+// 菜单里「复制/全选/清空」与药丸「编辑/删除」各出现两次。壳的判重键含 `when`
+// （见壳 `src/core/registry/commands/MenuRegistry.ts`）——声明式那份带 `when`、运行时那份不带，
+// 判重键不同 ⇒ 兜不住，两份都进注册表。
+// ⛔ 别在这里再写 registerItems：声明面已够用（loader 把 `contributes.commands` 连 `title` 注册进壳，
+//    菜单取不到显式 label 时按命令 title 显示），重复注册只会在菜单里真的多出一份。
 
 // E5.8#30.16（P8）：通用「beforeClose 可取消」通道——插件注册自己的关闭前 handler（壳重建的通用通道，非串口业务）。
 // 串口逻辑：关开着串口的标签页 → 强确认「会话正在使用 {{port}}，将断开连接」（与 #30.13 P9 共用同一 key）→

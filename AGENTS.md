@@ -1,7 +1,7 @@
 # 串口监视器（serial-monitor）——LinkDesk 插件仓
 
 > **本文件是给在这个仓里干活的 AI 看的**（Claude Code / Codex / Cursor / …）。人看 `README.md`。
-> 插件身份的唯一来源 = `plugin.json` 顶层的 `pluginId`（本仓：`serial-monitor`）。当前版本 `1.0.28`。
+> 插件身份的唯一来源 = `plugin.json` 顶层的 `pluginId`（本仓：`serial-monitor`）。当前版本 `1.0.29`。
 
 ## 1. 这是什么
 
@@ -25,7 +25,7 @@
 
 ## 3. 本仓的结构与关键路径
 
-`src/index.tsx` 做顶层菜单注册与「关闭前回调」；
+`src/index.tsx` 做顶层**接线**（插件级命令注册 + 接收日志订阅 + 「关闭前回调」）；
 接收区在 `src/cm6/*`（追加行 / 装饰 / 滚动 / 搜索 / 主题）；
 主视图 `src/views/SerialMonitorView/*`、设置 `src/views/SerialSettingsView/*`、会话列表 `src/views/SessionListView/*`；
 数据面 `src/services/SerialContext/*`；**独立环形缓冲 `src/utils/RingBuffer`**。
@@ -33,7 +33,9 @@
 
 
 - 🔴 `statusBar` 是**顶层字段**（不在 `contributes` 里）——**全仓只此一例**，照它写。
-- `menus` / `commands` 有一半是在**模块顶层**用 `window.linkdesk.menu.registerItems` 注册的（`contributes` 之外）——改菜单要**两边都看**。
+- 🔴 **右键菜单只有一个源**：`plugin.json` 的 `contributes.menus`（加载器在插件装载时注册，与视图是否挂载无关）。
+  ⛔ **不要在模块顶层再写 `window.linkdesk.menu.registerItems`**——1.0.29 之前这里就有这么一份，与声明式那份并存
+  ⇒ 菜单里同一项出现两次（壳的判重键含 `when`，两份的 `when` 一个有一个没有，兜不住）。改菜单只改 `plugin.json`。
 - 🔴 **串口数据是「流」不是「事件」**：多个消费者各拿一份完整历史，别把它改成发布 / 订阅。
 - `tabBehavior.invokeBeforeClose: "close_port"` —— 关标签页前要先关串口。
 - `suggests: protocol-bracket` / `recommends: workspace`：跨插件的「推荐搭配」声明。
