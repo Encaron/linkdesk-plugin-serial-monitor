@@ -1,25 +1,31 @@
 {
   "version": "1",
-  "updatedAt": "2026-09-29T06:14:16.234Z",
+  "updatedAt": "2026-09-29T08:18:25.052Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.26",
+      "version": "1.0.27",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.26/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.27/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.26/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.27/resources/icon.svg",
       "marketIconSource": "url",
       "minAppVersion": "0.2.20",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.26/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.26/serial-monitor.linkdesk-plugin",
-      "size": 172191,
-      "publishedAt": "2026-09-29T06:14:16.234Z",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.27/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.27/serial-monitor.linkdesk-plugin",
+      "size": 176318,
+      "publishedAt": "2026-09-29T08:18:25.052Z",
       "versions": [
+        {
+          "version": "1.0.27",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.27/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-09-29T08:18:25.052Z",
+          "changelog": "- **会话能点名了**（M2 AI 友好化 · `AI#67`）：本插件是**多串口**的——同时开几条会话、每条一个口一套设置一个标签页。而此前命令面里「会话」只有一个隐含目标（活跃会话）：AI 名义上能改设置，实际未必改在它以为的那条上（外部 AI 在黑盒复测里正是撞到这里——它改了「会话2」，却发现动的是别的会话）。现在三件事：\n  - **`serial-monitor.listSessions`**（新命令）：有**哪几条**会话、**谁是活跃**、每条的口与收发设置现况（`sessionId`/`name`/`portName`/`open`/`baudRate`/`sendMode`/`sendCoding`/`receiveCoding`/`showEcho`/`showLineNumbers`/`separateSystemLog`/`autoRepeat`/`autoClear`），外加两条视图态读数：`viewMounted`（该会话此刻有没有挂载标签页）与 `paused`（**没挂载时如实回 `null`**——「标签页没开」与「不是暂停态」是两件事，⛔ 不报 `false` 假装问过）。\n  - **六条会话态开关收 `sessionId`**：`toggleSendMode` / `toggleEcho` / `toggleLineNumbers` / `toggleSystemLog` / `toggleAutoRepeat` / `toggleAutoClear` 都可点名要改哪一条；**缺省仍是活跃会话**（旧调用方一个字没改）。🔴 **点名了却找不到那条会话 ⇒ 如实拒**（`{ok:false,noop:true,reason:\"bad-session\"}` 并**列出现有哪几条**），⛔ 绝不静默回退到活跃会话——那会造出「账面无错、其实改了别的会话」，正是本版要消灭的形状。既有几条带目标的老命令（`openPort`/`closePort`/`closeSession`/`setSendCoding`/`quickSendDelete`）同笔诚实化：显式传了坏 id 就报出来，不再当成「没传」。\n  - **开关回执带读数**：`{ok, sessionId, name, field, value, previous}`——`value` 是**改完从会话表读回来的**。此前回执什么都不回，门外只能从**命令面板标题**反推状态（标题是给人看的，会随状态变）——外部 AI 那条误判就是这么来的。七条开关的 handler 因此**从视图搬进插件级**（`services/serialCommands.ts`，常驻注册）：会话表是**模块级**单例、比标签页活得久，要改的那条会话可能**根本没开标签页**；视图现在只负责「按当前态换标题」。\n- **`serial-monitor.listPorts`（新命令）——硬件面读数**：这台机器上**插着哪几个串口**（与界面「端口」下拉**同一条腿**，读数不可能与 UI 分叉），每条回 `{portName, description, open, sessionId}`——`open` 取插件自己的 per-port 权威态（与侧栏灯同一份），`sessionId` 是这个口**绑在哪条会话**上（一步接上会话寻址）。此前门外 AI 只有 `exec`，`serial.listPorts` 是门② 的 API、够不着 ⇒ 想指定口只能瞎猜。空读数如实回 `{ok:true,count:0,ports:[]}`（**不是报错**）；读口失败回 `{ok:false,noop:true,reason:\"read-failed\"}`——「问不出来」与「一个口都没有」处置相反，分得开。\n- **声明面 19 → 24 条**：新增 2 条读命令（`when:\"false\"`，纯程序化、不进命令面板）＋ **补 3 条此前运行时注册却没声明的开关**（`toggleSystemLog`/`toggleAutoRepeat`/`toggleAutoClear`——声明面是壳侧唯一可发现性来源，缺了外部 AI 看不到）＋ 7 条开关补 `params`（`{ sessionId? }` 说明）。\n- **回执房规**：新读命令与寻址命令的坏参**出在载荷里**（`{ok:false,noop:true,reason,error}`），⛔ 不抛异常——抛出去会经壳弹一张用户可见却无从下手的红条（与 21 章 `AI#62`/`AI#67` 判例一致）；老一批「人在菜单里点得到」的命令**保留抛异常**，两种形状并存是有意的。\n- 无视觉变化、零新配置项、零新 IPC、壳侧零改动、`minAppVersion` 不动（仍 0.2.20）。\n- 读数：`npm run test` 26 文件 / **314 例**全绿（`serialCommands.test.ts` 29 例——新增会话寻址 8 例：点名命中/缺省旧语义/坏 id 与「一条会话都没有」各如实拒/读回值/六条开关同形）· `npm run verify` 六段全绿（声明面 24 名归属零偏离 · 字典 137 key）。"
+        },
         {
           "version": "1.0.26",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.26/serial-monitor.linkdesk-plugin",
