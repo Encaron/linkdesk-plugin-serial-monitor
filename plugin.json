@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@linkdesk/plugin-sdk/schemas/plugin.schema.json",
   "pluginId": "serial-monitor",
   "name": "串口监视器",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "minAppVersion": "0.2.20",
   "icon": "resources/icon-bar.svg",
   "marketIcon": "resources/icon.svg",
@@ -106,10 +106,10 @@
       },
       {
         "id": "serial-monitor.togglePause",
-        "title": "暂停接收",
+        "title": "切换接收暂停",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor' && serial-monitor.sourceOpen",
-        "description": "暂停/继续接收区刷新（暂停期间数据进缓冲，继续后补显示）。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）；回执 { ok, sessionId, name, field, value, previous }，field 恒为 paused。⚠️ 暂停态是**视图态**（不住会话表）——目标会话没开标签页时如实回 no-view，而不是 null 解引用。",
+        "description": "暂停/继续接收区刷新（暂停期间数据进缓冲，继续后补显示）。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）；回执 { ok, sessionId, name, field, value, previous }，field 恒为 paused。⚠️ 暂停态是**视图态**（不住会话表）——目标会话没开标签页时如实回 no-view，而不是 null 解引用。⚠️ 命令面板标题恒为动作名「切换接收暂停」（与状态无关）：暂停态每条标签页各自，而标题槽全局共用一个，按态写必撒谎。",
         "params": [
           {
             "name": "args",
@@ -127,10 +127,10 @@
       },
       {
         "id": "serial-monitor.toggleSendMode",
-        "title": "切换到 HEX 发送",
+        "title": "切换发送格式（文本 / HEX）",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "在文本发送与 HEX 发送之间切换（等于发送栏那颗切换）。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }（field 恒为 sendMode）——value 是**改后回读值**，⛔ 不用再从命令面板标题反推状态。",
+        "description": "在文本发送与 HEX 发送之间切换（等于发送栏那颗切换）。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }（field 恒为 sendMode）——value 是**改后回读值**。⚠️ 标题恒为动作名（与状态无关，多会话共用一个标题槽）⇒ 读状态只看回执 value 或 serial-monitor.listSessions，⛔ 别从标题反推。",
         "params": [
           {
             "name": "args",
@@ -141,10 +141,10 @@
       },
       {
         "id": "serial-monitor.toggleEcho",
-        "title": "关闭消息回显",
+        "title": "切换消息回显",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "打开/关闭发送内容在接收区的回显。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 showEcho（value 为改后回读值）。",
+        "description": "打开/关闭发送内容在接收区的回显。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 showEcho（value 为改后回读值）。⚠️ 标题恒为动作名（与状态无关，多会话共用一个标题槽）⇒ 读状态只看回执 value 或 listSessions。",
         "params": [
           {
             "name": "args",
@@ -155,10 +155,10 @@
       },
       {
         "id": "serial-monitor.toggleLineNumbers",
-        "title": "隐藏行号",
+        "title": "切换行号显示",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "显示/隐藏接收区行号。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 showLineNumbers（value 为改后回读值）。",
+        "description": "显示/隐藏接收区行号。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 showLineNumbers（value 为改后回读值）。⚠️ 标题恒为动作名（与状态无关，多会话共用一个标题槽）⇒ 读状态只看回执 value 或 listSessions。",
         "params": [
           {
             "name": "args",
@@ -169,10 +169,10 @@
       },
       {
         "id": "serial-monitor.toggleSystemLog",
-        "title": "关闭系统消息独立显示",
+        "title": "切换系统消息独立显示",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "打开/关闭「系统消息独立显示」（系统消息与数据分开显示）。🔴 这是**每条会话各自**的设置——多串口下会话1 与 会话2 互不影响，要改某一条就用 sessionId 点名（⛔ 别靠切标签页猜是哪条）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 separateSystemLog（value 为改后回读值）。",
+        "description": "打开/关闭「系统消息独立显示」（系统消息与数据分开显示）。🔴 这是**每条会话各自**的设置——多串口下会话1 与 会话2 互不影响，要改某一条就用 sessionId 点名（⛔ 别靠切标签页猜是哪条）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 separateSystemLog（value 为改后回读值）。⚠️ 标题恒为动作名（与状态无关，多会话共用一个标题槽）⇒ 读状态只看回执 value 或 listSessions。",
         "params": [
           {
             "name": "args",
@@ -183,10 +183,10 @@
       },
       {
         "id": "serial-monitor.toggleAutoRepeat",
-        "title": "关闭自动重发",
+        "title": "切换自动重发",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "打开/关闭自动重发。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 autoRepeat（value 为改后回读值）。",
+        "description": "打开/关闭自动重发。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 autoRepeat（value 为改后回读值）。⚠️ 标题恒为动作名（与状态无关，多会话共用一个标题槽）⇒ 读状态只看回执 value 或 listSessions。",
         "params": [
           {
             "name": "args",
@@ -197,10 +197,10 @@
       },
       {
         "id": "serial-monitor.toggleAutoClear",
-        "title": "关闭自动清屏",
+        "title": "切换自动清屏",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "打开/关闭自动清屏。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 autoClear（value 为改后回读值）。",
+        "description": "打开/关闭自动清屏。可传 sessionId 点名某条会话（缺省 = 当前活跃会话）。回执 { ok, sessionId, name, field, value, previous }，field 恒为 autoClear（value 为改后回读值）。⚠️ 标题恒为动作名（与状态无关，多会话共用一个标题槽）⇒ 读状态只看回执 value 或 listSessions。",
         "params": [
           {
             "name": "args",
@@ -256,7 +256,7 @@
         "title": "打开端口",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "打开串口端口——可指定 COM 口 / 波特率 / 帧格式（数据位·停止位·校验）；与界面点「打开」走同一条链路（侧栏灯、会话表一起动）。已在开则不动。无需视图在场。",
+        "description": "打开串口端口——可指定 COM 口 / 波特率 / 帧格式（数据位·停止位·校验）；与界面点「打开」走同一条链路（侧栏灯、会话表一起动）。已在开则不动。无需视图在场。⚠️ 多会话下给 portName 必须同时点 sessionId：只给 portName 会改绑「当前活跃会话」的口，而活跃会话随前台标签页变（同一条命令两种结果）——这种调用会被拒，报错里带各会话当前绑的口与修法。回执带 previousPortName（本次改绑前那个口，原本未绑为 null）。",
         "params": [
           {
             "name": "args",
@@ -270,7 +270,7 @@
         "title": "关闭端口",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "关闭已打开的串口端口（按口显式熄灯，走与界面同一写入链路）。未开则如实回 alreadyClosed，不假装关过。",
+        "description": "关闭已打开的串口端口（按口显式熄灯，走与界面同一写入链路）。未开则如实回 alreadyClosed，不假装关过。🔴 回执里的 sessionId 是**这个口的属主会话**（⛔ 不再是「解析出来的那条会话」——真机上曾出现「关 48 的 COM3，回执却报 49」）；点名了别的会话时另带 requestedSessionId，如实回。",
         "params": [
           {
             "name": "args",

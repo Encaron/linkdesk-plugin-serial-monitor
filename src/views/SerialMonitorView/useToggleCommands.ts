@@ -4,39 +4,27 @@
  * 🔴 结构变化与理由：六条会话态开关（发送模式／回显／行号／系统消息独立显示／自动重发／自动清屏）
  * 的 handler 已搬到 `services/serialCommands.ts`（插件级、常驻）——它们改的是**会话表**（模块级单例），
  * 与视图在场与否无关；而门外 AI 要点名改的那条会话**可能根本没开标签页**（会话比标签页活得久）。
- * handler 留两份迟早分叉 ⇒ 本文件只留一件视图才有的事：
- * **命令面板标题随当前态翻转**（`titleKey(当前值)`，与插件级注册共用同一处文案）。
  * ⚠️ 两条注册共用同一个 handler 引用（`SESSION_TOGGLE_HANDLERS[id]`）——⛔ 别在这里手写第二份实现。
+ *
+ * `AI#68`：**本文件不再刷标题**（`refreshToggleTitle` ＋ 六处 `useEffect` 已删）。命令面板标题是
+ * **一个命令 id 一个槽**（壳侧全局共享），而状态是**每条会话各自的**——多挂一个串口标签页就多一个
+ * 写手，谁都可能把槽写成自己那条会话的状态 ⇒ 那个标题按构造不可靠（真机复现：活跃会话的开关明明
+ * 是「开」，标题却读成「关闭…」）。现在标题只说「这条命令干嘛」（插件级注册的那一份，与状态无关）。
+ * 读状态走 `serial-monitor.listSessions`，或开关回执里的 `value`（改后回读）——⛔ 都别再从标题反推。
  *
  * `togglePause` **留在这里**：`paused` 是视图态（`stream.paused`，不在会话表里），没有视图就没有它
  * ⇒ 本插件唯一一条「必须视图在场」的开关。它照样认 `sessionId`（会话寻址统一口径），
  * 只是目标会话没挂载视图时**给可读回执**，而不是老代码 `getActiveCmd()!` 那种 null 解引用。
+ * 它的标题同样是固定的「切换接收暂停」——`paused` 也**每条视图各自**，理由同上。
  */
 
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  SESSION_TOGGLE_HANDLERS, addressSession, badArg, readSessionId, sessionToggleTitleKey,
-} from "../../services/serialCommands";
+import { addressSession, badArg, readSessionId } from "../../services/serialCommands";
 import { _cmdMap } from "../../services/commandBridge";
-import type { SerialSettings } from "./settings";
 
-export interface ToggleCommandsOptions {
-  settings: SerialSettings;
-  paused: boolean;
-}
-
-/** 注册一条开关的**标题**（handler 引用取自插件级那份）——`t` 由调用方给，模块级不持 hook */
-function refreshToggleTitle(t: (key: string) => string, id: string, current: unknown): void {
-  window.linkdesk?.commands?.registerCommand?.(id, SESSION_TOGGLE_HANDLERS[id], {
-    title: t(sessionToggleTitleKey(id, current)),
-    category: t("串口监视器"),
-  });
-}
-
-export function useToggleCommands({ settings, paused }: ToggleCommandsOptions) {
+export function useToggleCommands() {
   const { t } = useTranslation();
-  const { sendMode, showEcho, showLineNumbers, separateSystemLog, autoRepeat, autoClear } = settings;
 
   // ── 暂停/继续：唯一住视图的开关（见文件头注） ──
   useEffect(() => {
@@ -61,15 +49,7 @@ export function useToggleCommands({ settings, paused }: ToggleCommandsOptions) {
           field: "paused", value: !cmd.paused, previous: cmd.paused,
         };
       },
-      { title: paused ? t("继续接收") : t("暂停接收"), category: t("串口监视器") },
+      { title: t("切换接收暂停"), category: t("串口监视器") },
     );
-  }, [paused, t]);
-
-  // ── 六条会话态开关：只刷标题（handler 与初注册都在插件级） ──
-  useEffect(() => { refreshToggleTitle(t, "serial-monitor.toggleSendMode", sendMode); }, [sendMode, t]);
-  useEffect(() => { refreshToggleTitle(t, "serial-monitor.toggleEcho", showEcho); }, [showEcho, t]);
-  useEffect(() => { refreshToggleTitle(t, "serial-monitor.toggleLineNumbers", showLineNumbers); }, [showLineNumbers, t]);
-  useEffect(() => { refreshToggleTitle(t, "serial-monitor.toggleSystemLog", separateSystemLog); }, [separateSystemLog, t]);
-  useEffect(() => { refreshToggleTitle(t, "serial-monitor.toggleAutoRepeat", autoRepeat); }, [autoRepeat, t]);
-  useEffect(() => { refreshToggleTitle(t, "serial-monitor.toggleAutoClear", autoClear); }, [autoClear, t]);
+  }, [t]);
 }

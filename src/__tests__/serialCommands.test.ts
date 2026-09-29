@@ -18,6 +18,7 @@
  * 都没有（插件专属后门面）⇒ 本文件就地铺一层记录式假件。
  */
 import { describe, it, expect, beforeEach, beforeAll, vi } from "vitest";
+import i18n from "i18next";
 import { registerSerialCommands } from "../services/serialCommands";
 import {
   createSessionModule, getSessionById, getSessions, setActiveSessionId, updateSessionById,
@@ -543,5 +544,136 @@ describe("AI#67 会话寻址：listSessions ＋ 六条开关认 sessionId", () =
     expect(after.port).toBe(before.port);
     expect(after.sendCoding).toBe(before.sendCoding);
     expect(after.receiveCoding).toBe(before.receiveCoding);
+  });
+});
+
+describe("AI#68 端口面的两个谎：猜靶子（openPort）与认错人（closePort 回执）", () => {
+  /** 两条会话各自绑一个口——多串口现场的最小复刻 */
+  function twoSessionsBound(): void {
+    const s1 = createSessionModule("会话1", "s-1");
+    const s2 = createSessionModule("会话2", "s-2");
+    updateSessionById(s1.id, { port: "COM3" });
+    updateSessionById(s2.id, { port: "COM4" });
+    setActiveSessionId(s2.id); // 活跃 = 会话2：与真机上「用户在 COM4 标签页」同形
+  }
+
+  it("🔴 多会话下只给 portName ⇒ 拒（⛔ 不当场改绑活跃会话的口——活跃会话随前台标签页变，同一条命令两种结果）", async () => {
+    twoSessionsBound();
+
+    await expect(handlers.get("serial-monitor.openPort")!({ portName: "COM9" }))
+      .rejects.toThrow(/多会话下给 portName 必须点名 sessionId/);
+
+    // 修法一次说全：谁在哪条会话上、谁是活跃、去哪个命令要清单
+    await expect(handlers.get("serial-monitor.openPort")!({ portName: "COM9" }))
+      .rejects.toThrow(/会话1\[s-1\]→COM3、会话2\[s-2\]→COM4（活跃）/);
+    await expect(handlers.get("serial-monitor.openPort")!({ portName: "COM9" }))
+      .rejects.toThrow(/serial-monitor\.listSessions/);
+
+    // 负控：真的什么都没动（不是「拒了但又改了绑定」）
+    expect(getSessions().map((s) => s.port)).toEqual(["COM3", "COM4"]);
+    expect(getOpenPorts().size).toBe(0);
+    expect(lampSeq()).toHaveLength(0); // 灯一笔没写（⚠️ 会话快照也写 pluginState，故只看灯键）
+    expect(openArgs).toHaveLength(0);
+  });
+
+  it("多会话下点了名 ⇒ 通，且只改点名那条（活跃那条不动）＋ 回执带 previousPortName（改绑前那个口）", async () => {
+    twoSessionsBound();
+
+    const res = await handlers.get("serial-monitor.openPort")!({ portName: "COM9", sessionId: "s-1" }) as {
+      opened: boolean; sessionId: string; portName: string; previousPortName: string | null;
+    };
+
+    expect(res).toMatchObject({ opened: true, sessionId: "s-1", portName: "COM9", previousPortName: "COM3" });
+    expect(getSessionById("s-1")?.port).toBe("COM9");
+    expect(getSessionById("s-2")?.port).toBe("COM4"); // 活跃那条一个字节没动
+    expect(openArgs[0]).toMatchObject({ portName: "COM9" });
+  });
+
+  it("单会话（或不带 portName）照旧通——老调用与手点路径不受这道门影响", async () => {
+    const s = createSessionModule("会话1", "s-1");
+
+    const byPort = await handlers.get("serial-monitor.openPort")!({ portName: "COM3" }) as {
+      opened: boolean; portName: string; previousPortName: string | null;
+    };
+    expect(byPort).toMatchObject({ opened: true, portName: "COM3", previousPortName: null }); // 原本没绑口 ⇒ null
+
+    // 不带 portName：靶子就是「当前这条」，与手点侧栏「打开」同义（没有改绑，无需点名）
+    portsReply = [{ name: "COM5", description: "USB-SERIAL" }];
+    createSessionModule("会话2", "s-2");
+    const bare = await handlers.get("serial-monitor.openPort")!({ sessionId: "s-2" }) as { portName: string; previousPortName: string | null };
+    expect(bare).toMatchObject({ portName: "COM5", previousPortName: null });
+    expect(getSessionById(s.id)?.port).toBe("COM3"); // 老那条没被顺手改绑
+  });
+
+  it("已在开时再开 ⇒ 回 alreadyOpen，但 previousPortName 仍是「这条会话现在绑的口」（读得出动没动）", async () => {
+    twoSessionsBound();
+    await openPortFromModule({ portName: "COM3", baudRate: 115200 });
+
+    const res = await handlers.get("serial-monitor.openPort")!({ portName: "COM3", sessionId: "s-1" }) as {
+      opened: boolean; alreadyOpen?: boolean; previousPortName: string | null;
+    };
+
+    expect(res).toMatchObject({ opened: false, alreadyOpen: true, previousPortName: "COM3" });
+  });
+
+  it("🔴 closePort 回执的 sessionId = 这个口的属主（⛔ 不是活跃会话）——真机那条「关 48 的 COM3 却报 49」的正面判据", async () => {
+    twoSessionsBound();
+    await openPortFromModule({ portName: "COM3", baudRate: 115200 }); // COM3 属于会话1，而活跃是会话2
+
+    const res = await handlers.get("serial-monitor.closePort")!({ portName: "COM3" }) as {
+      closed: boolean; portName: string; sessionId: string | null; requestedSessionId?: string;
+    };
+
+    expect(res).toMatchObject({ closed: true, portName: "COM3", sessionId: "s-1" }); // 属主，不是活跃的 s-2
+    expect(res.requestedSessionId).toBeUndefined(); // 没点名 ⇒ 不塞这个字段（形状稳定）
+    expect(getOpenPorts().has("COM3")).toBe(false);
+  });
+
+  it("点名了非属主 ⇒ 两条都报（属主 ＋ requestedSessionId），⛔ 不让调用方以为点到了", async () => {
+    twoSessionsBound();
+    await openPortFromModule({ portName: "COM3", baudRate: 115200 });
+
+    const res = await handlers.get("serial-monitor.closePort")!({ portName: "COM3", sessionId: "s-2" }) as {
+      sessionId: string | null; requestedSessionId?: string;
+    };
+
+    expect(res).toMatchObject({ sessionId: "s-1", requestedSessionId: "s-2" });
+  });
+
+  it("口属主查不到（口开着却没有会话绑它）⇒ 如实报 null，⛔ 不编一个最近的会话", async () => {
+    createSessionModule("会话1", "s-1");
+    await openPortFromModule({ portName: "COM7", baudRate: 115200 });
+
+    const res = await handlers.get("serial-monitor.closePort")!({ portName: "COM7" }) as { sessionId: string | null };
+
+    expect(res.sessionId).toBeNull();
+  });
+
+  it("🔴 标题恒为动作名：不随状态变（一个标题槽 × 多条会话 = 按构造会撒谎）", async () => {
+    const want: Record<string, string> = {
+      "serial-monitor.toggleSendMode": "切换发送格式（文本 / HEX）",
+      "serial-monitor.toggleEcho": "切换消息回显",
+      "serial-monitor.toggleLineNumbers": "切换行号显示",
+      "serial-monitor.toggleSystemLog": "切换系统消息独立显示",
+      "serial-monitor.toggleAutoRepeat": "切换自动重发",
+      "serial-monitor.toggleAutoClear": "切换自动清屏",
+    };
+    const titles = () => Object.fromEntries(Object.keys(want).map((id) => [id, metas.get(id)?.title]));
+
+    // ⚠️ i18next 在本仓测试里默认未初始化（`t()` 会给 undefined ⇒ 比 undefined 是空过）。
+    //    这里显式初始化一次、空词典：`t(键)` 原样回键，标题就是词条原文。
+    await i18n.init({ lng: "zh", resources: { zh: { translation: {} } }, initImmediate: false });
+    registerSerialCommands();
+
+    expect(titles()).toEqual(want); // 非空过：注册进去的 title 真是那个字符串
+    // ⛔ 一条都不许再带「开/关/显示/隐藏」这类按态措辞（防有人把 titleKey 写回来）
+    for (const title of Object.values(want)) expect(title).toMatch(/^切换/);
+
+    // 把六条字段翻一遍再重注册（＝视图侧每次渲染都会干的那件事）——标题必须一字不改
+    const s = createSessionModule("会话1", "s-1");
+    for (const id of Object.keys(want)) await handlers.get(id)!({ sessionId: "s-1" });
+    expect(getSessionById(s.id)).toBeDefined();
+    registerSerialCommands();
+    expect(titles()).toEqual(want);
   });
 });

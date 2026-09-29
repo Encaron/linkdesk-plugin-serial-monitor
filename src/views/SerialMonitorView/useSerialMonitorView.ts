@@ -96,7 +96,7 @@ export function useSerialMonitorView(sourceId: string | undefined, isActive: boo
     appendLine: receive.appendLine,
   });
   useViewCommands();
-  useToggleCommands({ settings, paused: stream.paused });
+  useToggleCommands();
 
   return { activeSession, settings, stats, receive, send, stream, search, qs };
 }

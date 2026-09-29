@@ -20,6 +20,11 @@
  * 一个隐含目标）⇒ 读面加 `listSessions`（有哪几条、谁是活跃、每条现况），写面给六条开关收
  * `sessionId`。同一判据：会话表是模块级单例，改它不需要视图在场——所以这批也住本文件。
  *
+ * `AI#68` 再收三处「猜靶子／认错人」的尾巴（外部 AI 在 0.2.26 复测里逼出）：`openPort` 多会话下
+ * 不许拿「当前活跃会话」当靶子（那会改绑它的口，而活跃会话随前台标签页变——同一条命令两种结果）；
+ * `closePort` 回执认**口的属主**（旧面报的是解析出来的会话 ⇒ 关 48 的 COM3 却报 49）；六条开关的
+ * 标题不再按状态翻转（一个命令 id 一个标题槽，状态却是每条会话各自的 ⇒ 那个标题按构造不可靠）。
+ *
  * ## 🔴 作者契约（E6#62e on-command 激活）
  *
  * 无视图时 AI 经 `exec` 打到一条池内没注册的命令 → 池 preload 会 `import()` 属主插件入口
@@ -139,10 +144,16 @@ export function badArg(reason: string, error: string): BadReply {
   return { ok: false, noop: true, reason, error };
 }
 
-/** 现有会话的可读清单——报「找不到」时要能顺便告诉对方**有哪些**（⛔ 别让调用方再来问一次） */
+/** 现有会话的可读清单——报「找不到」时要能顺便告诉对方**有哪些**（⛔ 别让调用方再来问一次）。
+ *  `AI#68` 起带上**各自绑的口**与活跃标记：多会话下「这条会话是哪个口」正是调用方要判的东西
+ *  （真机上就是靠它把 48↔COM3 / 49↔COM4 对上），也是「不打名就打活跃会话」那条拒信的依据。 */
 function describeSessions(): string {
   const all = getSessions();
-  return all.length === 0 ? "（一条都没有）" : all.map((s) => `${s.name}[${s.id}]`).join("、");
+  if (all.length === 0) return "（一条都没有）";
+  const active = getActiveSessionId();
+  return all
+    .map((s) => `${s.name}[${s.id}]→${s.port || "未绑口"}${s.id === active ? "（活跃）" : ""}`)
+    .join("、");
 }
 
 /**
@@ -201,8 +212,11 @@ export function readSessionId(args: unknown[]): unknown {
  *    外面 AI 要点名改的那条会话**可能根本没开标签页**（会话表是模块级单例，比标签页活得久）
  *    ⇒ handler 搬到插件级（本文件常驻注册），视图只留「按当前态换标题」。
  *
- * ⚠️ 标题文案仍是**两条**（开/关各一，key = 原文）——`titleKey(current)` 按当前值二选一，
- *    插件级注册（`i18n.t`）与视图态重注册（`t`）**共用这一个函数**，⛔ 别在视图里再抄一份措辞。
+ * ⚠️ `AI#68` 把标题改成**与状态无关**的一句动作名（「切换…」），并**删掉视图侧的按态重注册**——
+ *    命令面板标题是**一个命令 id 一个槽**（全局共享），而状态是**每条会话各自的**：多挂一个串口
+ *    标签页就多一个写手，谁都可能把槽写成自己那条会话的状态 ⇒ 那个标题**按构造就不可靠**
+ *    （真机复现：活跃会话的开关明明是「开」，标题却读成「关闭…」）。读状态走 `listSessions`
+ *    或开关回执的 `value`；标题只说「这条命令干嘛」。⛔ 别再把 `current` 塞回标题。
  */
 export type SessionToggleField = "sendMode" | "showEcho" | "showLineNumbers" | "separateSystemLog" | "autoRepeat" | "autoClear";
 
@@ -211,8 +225,8 @@ export interface SessionToggleSpec {
   id: string;
   /** 被翻转的会话字段——回执里用 `field` 回显它（⛔ 不用动态键：调用方要能稳定读到字段名） */
   field: SessionToggleField;
-  /** 命令面板标题的 i18n key（按当前值二选一） */
-  titleKey: (current: unknown) => string;
+  /** 命令面板标题的 i18n key——`AI#68` 起**与状态无关**（固定一句动作名），理由见下面定义表的头注 */
+  title: string;
   /** 由「当前值」算「新值」 */
   next: (current: unknown) => unknown;
 }
@@ -224,45 +238,45 @@ export const SESSION_TOGGLES: readonly SessionToggleSpec[] = [
   {
     id: "serial-monitor.toggleSendMode",
     field: "sendMode",
-    titleKey: (v) => (v === SEND_MODE_HEX ? "切换到文本发送" : "切换到 HEX 发送"),
+    title: "切换发送格式（文本 / HEX）",
     next: altSendMode,
   },
   {
     id: "serial-monitor.toggleEcho",
     field: "showEcho",
-    titleKey: (v) => (v === true ? "关闭消息回显" : "开启消息回显"),
+    title: "切换消息回显",
     next: flipBool,
   },
   {
     id: "serial-monitor.toggleLineNumbers",
     field: "showLineNumbers",
-    titleKey: (v) => (v === true ? "隐藏行号" : "显示行号"),
+    title: "切换行号显示",
     next: flipBool,
   },
   {
     id: "serial-monitor.toggleSystemLog",
     field: "separateSystemLog",
-    titleKey: (v) => (v === true ? "关闭系统消息独立显示" : "开启系统消息独立显示"),
+    title: "切换系统消息独立显示",
     next: flipBool,
   },
   {
     id: "serial-monitor.toggleAutoRepeat",
     field: "autoRepeat",
-    titleKey: (v) => (v === true ? "关闭自动重发" : "开启自动重发"),
+    title: "切换自动重发",
     next: flipBool,
   },
   {
     id: "serial-monitor.toggleAutoClear",
     field: "autoClear",
-    titleKey: (v) => (v === true ? "关闭自动清屏" : "开启自动清屏"),
+    title: "切换自动清屏",
     next: flipBool,
   },
 ];
 
-/** 取某条开关的标题 key（按当前值）——插件级注册与视图态重注册共用 */
-export function sessionToggleTitleKey(id: string, current: unknown): string {
+/** 取某条开关的**固定**标题 key（与状态无关）——插件级注册与视图态重注册共用同一处措辞 */
+export function sessionToggleTitleKey(id: string): string {
   const spec = SESSION_TOGGLES.find((s) => s.id === id);
-  return spec ? spec.titleKey(current) : id;
+  return spec ? spec.title : id;
 }
 
 /**
@@ -329,12 +343,26 @@ export function registerSerialCommands(): number {
     "serial-monitor.openPort",
     async (args?: OpenPortArgs) => {
       const a = args ?? {};
+      // 🔴 `AI#68`：**多会话下不打名，靶子就是「谁在前台」**——下面的 `patch.port = a.portName` 会改绑
+      //    那条会话的口，而活跃会话随用户切标签页变（真机复现：同一条 `openPort {"portName":"COM4"}`
+      //    落到哪条会话，取决于调用瞬间前台是谁——用户切一下标签页，结果就变了）。
+      //    这类「行为取决于调用瞬间」的写对无人值守的 AI 不可推理 ⇒ **拒**，并把「现有哪几条、各自
+      //    绑谁、谁是活跃」一次说全（⛔ 不猜、⛔ 不默认打活跃会话）。
+      //    ⚠️ 不带 portName 的调用不受影响：那时靶子就是「当前这条」，与手点侧栏「打开」同义（没有改绑）。
+      if (a.portName && !a.sessionId && getSessions().length > 1) {
+        throw new Error(
+          `多会话下给 portName 必须点名 sessionId（现有：${describeSessions()}）`
+          + "——只给 portName 会改绑「当前活跃会话」的口，而活跃会话随前台标签页变（同一条命令两种结果）；"
+          + "各会话当前绑的口与 id 看 serial-monitor.listSessions",
+        );
+      }
       let session = resolveSession(a.sessionId);
       // 🔴 AI#67：**显式点名了会话却没命中 ⇒ 如实报错**（⛔ 别顺手新建一条——那会把「我要开会话2」
       // 变成「多出一条会话」，正是本系列反复消灭的「账面无错、其实做错了别的」）。
       if (!session && a.sessionId) throw sessionNotFoundError(a.sessionId);
       // 一个会话都没有 → 建一个（同 useSession 的自动建会话语义——否则「打开端口」在空插件上无处落）
       if (!session) session = createSessionModule(i18n.t("会话"));
+      const previousPortName = session.port || null; // `AI#68`：改绑前那个口——回执要说清「这一笔动没动绑定」
       const patch: Partial<SerialSession> = {};
       if (a.portName) patch.port = a.portName;
       if (a.baudRate !== undefined) patch.baudRate = String(a.baudRate);
@@ -357,11 +385,14 @@ export function registerSerialCommands(): number {
       const opts = sessionPortOptions(next);
       if (hasOpenPort(portName)) {
         // 已开：不动（本命令是「打开」不是「翻转」——关有 closePort）——如实回读，不假装刚开
-        return { opened: false, alreadyOpen: true, sessionId: next.id, portName, baudRate: opts.baudRate };
+        return {
+          opened: false, alreadyOpen: true, sessionId: next.id, portName, previousPortName,
+          baudRate: opts.baudRate,
+        };
       }
       await openPortFromModule({ portName, ...opts });
       return {
-        opened: true, sessionId: next.id, portName, baudRate: opts.baudRate,
+        opened: true, sessionId: next.id, portName, previousPortName, baudRate: opts.baudRate,
         encoding: opts.encoding ?? null, frame: opts.frame,
       };
     },
@@ -380,11 +411,17 @@ export function registerSerialCommands(): number {
       if (!portName) {
         throw new Error("未指定端口——会话也没绑端口（给 portName 或先选口）");
       }
+      // 🔴 `AI#68`：回执里的 `sessionId` = **这个口的属主**，⛔ 不再是「解析出来的那条会话」。
+      //    旧面报的是后者（缺省 = 活跃会话）——真机上关 48 的 COM3，回执却报 49：AI 拿回执复验
+      //    「我关的是 48 那条会话的口吗」会被误导。属主查不到（口开着但没有会话绑它）就如实报 null。
+      const ownerId = getSessions().find((s) => s.port === portName)?.id ?? null;
+      // 点名了却没点到属主 ⇒ 两条都报（「这个口属于谁」＋「你要的是谁」），⛔ 别让它以为点到了
+      const asked = args?.sessionId && args.sessionId !== ownerId ? { requestedSessionId: args.sessionId } : {};
       if (!hasOpenPort(portName)) {
-        return { closed: false, alreadyClosed: true, portName, sessionId: session?.id ?? null };
+        return { closed: false, alreadyClosed: true, portName, sessionId: ownerId, ...asked };
       }
       await closePortFromModule(portName);
-      return { closed: true, portName, sessionId: session?.id ?? null };
+      return { closed: true, portName, sessionId: ownerId, ...asked };
     },
     { title: i18n.t("关闭端口"), category: cat, when: whenActive },
   );
@@ -673,16 +710,13 @@ export function registerSerialCommands(): number {
 
   /* ── 会话寻址·写：六条会话态开关（M2 AI#67）──
      handler 住本文件（常驻，⛔ 不再随视图走）——会话表是模块级单例，比标签页活得久：AI 点名要改的
-     那条会话可能根本没开标签页。视图只负责「按当前态换标题」，见 useToggleCommands。
-     回执带 `field` / `previous` / `value`（改后回读）——⛔ 别让调用方从命令面板标题反推状态。 */
-  const toggleNow = () => {
-    const active = getActiveSessionId();
-    return (active ? getSessionById(active) : undefined) ?? getSessions()[0] ?? null;
-  };
+     那条会话可能根本没开标签页。
+     回执带 `field` / `previous` / `value`（改后回读）——⛔ 别让调用方从命令面板标题反推状态。
+     `AI#68`：标题从此**与状态无关**（固定动作名），也不再按活跃会话取一次当前值——理由见
+     `SESSION_TOGGLES` 上方的头注（一个标题槽 × 多条会话 = 按构造会撒谎）。 */
   for (const spec of SESSION_TOGGLES) {
-    const current = toggleNow();
     reg(spec.id, SESSION_TOGGLE_HANDLERS[spec.id], {
-      title: i18n.t(spec.titleKey(current ? current[spec.field] : undefined)),
+      title: i18n.t(spec.title),
       category: cat,
       when: whenActive,
     });
