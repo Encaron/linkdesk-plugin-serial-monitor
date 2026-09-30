@@ -130,5 +130,14 @@
   "选择一个会话以编辑收发设置": "Select a session to edit send/receive settings",
   "新建会话": "New Session",
   "新会话名称：": "New session name:",
-  "暂无串口监视器会话。": "No serial monitor sessions yet."
+  "暂无串口监视器会话。": "No serial monitor sessions yet.",
+  "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。": "Serial data monitor — receive area (CodeMirror 6) + send bar (Monaco) + sidebar settings. LinkDesk's first view plugin; the universal container infrastructure was validated here. Not tied to any particular use.",
+  "断开": "Close",
+  "打开": "Open",
+  "确定": "OK",
+  "取消": "Cancel",
+  "会话": "Session",
+  "开": "On",
+  "关": "Off",
+  "新会话": "New Session"
 }
