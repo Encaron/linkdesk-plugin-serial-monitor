@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@linkdesk/plugin-sdk/schemas/plugin.schema.json",
   "pluginId": "serial-monitor",
   "name": "串口监视器",
-  "version": "1.0.32",
+  "version": "1.0.33",
   "minAppVersion": "0.2.20",
   "icon": "resources/icon-bar.svg",
   "marketIcon": "resources/icon.svg",
@@ -63,12 +63,14 @@
         "serial-monitor.statusBar.connection": {
           "type": "boolean",
           "default": true,
-          "description": "状态栏显示连接状态指示灯"
+          "description": "状态栏显示连接状态指示灯",
+          "title": "连接指示灯"
         },
         "serial-monitor.confirmOnClose": {
           "type": "boolean",
           "default": true,
-          "description": "关闭时提示"
+          "description": "关闭时提示",
+          "title": "关闭确认"
         }
       }
     },

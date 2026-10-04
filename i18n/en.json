@@ -4,6 +4,8 @@
   "收发设置": "Send/Receive",
   "状态栏显示连接状态指示灯": "Show connection indicator in status bar",
   "关闭时提示": "Prompt on Close",
+  "连接指示灯": "Connection Indicator",
+  "关闭确认": "Confirm on Close",
   "会话正在使用 {{port}}，将断开连接": "Session in use: {{port}}, will disconnect",
   "打开端口": "Open Port",
   "关闭端口": "Close Port",
