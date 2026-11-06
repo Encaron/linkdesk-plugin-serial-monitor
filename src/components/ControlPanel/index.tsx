@@ -11,6 +11,7 @@
  * 子模块：useControlPanel（接线）/ PortSelect / BaudInput / FrameSelects（三段控件）。
  */
 
+import { Button } from "@linkdesk/ui";
 import { useControlPanel } from "./useControlPanel";
 import { PortSelect } from "./PortSelect";
 import { BaudInput } from "./BaudInput";
@@ -50,14 +51,16 @@ function ControlPanel({ sourceId }: { sourceId?: string }) {
 
       <span className="serial-monitor-control-spacer" />
 
-      {/* 连接/断开按钮 */}
-      <button
-        className={`serial-monitor-control-connect-btn${p.connected ? " connected" : ""}`}
+      {/* 连接/断开按钮——2026-11-07 收编：自绘 → 壳共享 Button。语义映射照市场详情页动作层级：
+       *  打开 = 正面主操作（实心 success）；断开 = 破坏性次级（danger 描边，不抢主操作眼）。 */}
+      <Button
+        size="sm"
+        variant={p.connected ? "danger" : "success"}
         onClick={p.handleToggleOpen}
         disabled={!p.hasSession}
       >
         {p.connected ? p.t("断开") : p.t("打开")}
-      </button>
+      </Button>
     </div>
   );
 }

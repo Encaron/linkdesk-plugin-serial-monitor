@@ -7,6 +7,7 @@
 
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@linkdesk/ui";
 
 export interface SenderAreaProps {
   hexWarning: string;
@@ -55,14 +56,16 @@ export default function SenderArea(p: SenderAreaProps) {
       </div>
       <div className="serial-monitor-sender-actions">
         <div className="serial-monitor-history-wrapper" ref={historyWrapRef}>
-          <button
-            className={`serial-monitor-toolbar-btn${p.showHistory ? " active" : ""}`}
+          {/* 2026-11-07 收编：自绘 → 壳共享 Button（ghost sm）；disabled 契约直通 */}
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => p.setShowHistory(!p.showHistory)}
-            data-hint={t("发送历史")}
+            title={t("发送历史")}
             disabled={p.sendHistory.length === 0}
           >
             ▼
-          </button>
+          </Button>
           {p.showHistory && p.sendHistory.length > 0 && (
             <div className="serial-monitor-history-dropdown">
               {p.sendHistory.map((h, i) => (
@@ -77,12 +80,13 @@ export default function SenderArea(p: SenderAreaProps) {
             </div>
           )}
         </div>
-        <button className="serial-monitor-toolbar-btn" onClick={p.onClearSend}>
+        <Button variant="ghost" size="sm" onClick={p.onClearSend}>
           {t("清空发送区")}
-        </button>
-        <button className="serial-monitor-send-btn" onClick={p.onSend}>
+        </Button>
+        {/* 发送 = 主操作 ⇒ 缺省实心 accent（Button 双轨制实心轨） */}
+        <Button onClick={p.onSend}>
           {t("发送")}
-        </button>
+        </Button>
       </div>
     </div>
   );

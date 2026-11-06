@@ -92,46 +92,6 @@
 }
 
 /* ── 连接/断开按钮 ── */
-
-.serial-monitor-control-connect-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: transparent;
-  border: 1px solid var(--separator); /* E5.8#128.8：幽灵 --border-subtle → 真实 separator */
-  border-radius: 4px;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：connect-btn 12→sm */
-  font-family: inherit;
-  padding: 3px 10px;
-  cursor: pointer;
-  transition: background 120ms, border-color 120ms, color 120ms;
-  flex-shrink: 0;
-}
-
-.serial-monitor-control-connect-btn:hover {
-  background: var(--hover-overlay);
-  color: var(--text-primary);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary) 8%, transparent); /* E5.8#128.8：rgba 硬编码 → 文字色 8% 合成（主题感知） */
-}
-
-.serial-monitor-control-connect-btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
-}
-
-.serial-monitor-control-connect-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.serial-monitor-control-connect-btn.connected {
-  border-color: var(--serial-monitor-ok);
-  color: var(--serial-monitor-ok);
-}
-
-.serial-monitor-control-connect-btn.connected:hover {
-  border-color: var(--danger);
-  color: var(--danger);
-}
+/* 2026-11-07：.serial-monitor-control-connect-btn 全族已删——收编壳共享 Button
+ *  （打开 = 实心 success ／ 断开 = danger 描边，语义映射照市场详情页动作层级）。 */
 

@@ -4,7 +4,7 @@
  */
 
 import { useTranslation } from "react-i18next";
-import { SelectBox } from "@linkdesk/ui";
+import { Button, SelectBox } from "@linkdesk/ui";
 
 export interface ToolbarProps {
   paused: boolean;
@@ -27,19 +27,21 @@ export default function Toolbar(p: ToolbarProps) {
 
   return (
     <div className="serial-monitor-toolbar">
-      <button className={`serial-monitor-toolbar-btn${p.paused ? " active" : ""}`} onClick={p.onPause} data-hint={t("暂停接收")}>
+      {/* 2026-11-07 收编：自绘 toolbar-btn → 壳共享 Button（ghost sm）。data-hint → title（Button 契约同义）。
+       *  active 高亮暂缺——暂停态由图标切换（debug-pause↔debug-start）表达，效果评估后再定去留。 */}
+      <Button variant="ghost" size="sm" onClick={p.onPause} title={t("暂停接收")}>
         <span className={`codicon ${p.paused ? "codicon-debug-start" : "codicon-debug-pause"}`} />
         {p.paused ? t("继续接收") : t("暂停接收")}
-      </button>
+      </Button>
 
-      <button className="serial-monitor-toolbar-btn" onClick={p.onExport} data-hint={t("导出日志")}>
+      <Button variant="ghost" size="sm" onClick={p.onExport} title={t("导出日志")}>
         <span className="codicon codicon-export" />
         {t("导出日志")}
-      </button>
-      <button className="serial-monitor-toolbar-btn" onClick={p.onClear} data-hint={t("清空接收区")}>
+      </Button>
+      <Button variant="ghost" size="sm" onClick={p.onClear} title={t("清空接收区")}>
         <span className="codicon codicon-clear-all" />
         {t("清空接收区")}
-      </button>
+      </Button>
       <SelectBox
         value={p.filterMode}
         options={[
@@ -57,10 +59,10 @@ export default function Toolbar(p: ToolbarProps) {
         style={{ width: 110 }}
       />
 
-      <button className={`serial-monitor-toolbar-btn${p.searchVisible ? " active" : ""}`} onClick={p.onToggleSearch}>
+      <Button variant="ghost" size="sm" onClick={p.onToggleSearch} title={t("搜索")}>
         <span className="codicon codicon-search" />
         {t("搜索")}
-      </button>
+      </Button>
 
       {/* E5.8#30.12（P6）：per-tab TX/RX 计数——归位接收区工具栏（状态栏已删全局计数） */}
       <span className={`serial-monitor-receive-stats${p.portIsOpen ? "" : " muted"}`}>
