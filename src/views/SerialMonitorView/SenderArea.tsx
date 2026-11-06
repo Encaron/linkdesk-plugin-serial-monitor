@@ -5,6 +5,7 @@
  *    创建/销毁在 useSendEditorCm 内——CM6 生命周期与视图组件一致。
  */
 
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 export interface SenderAreaProps {
@@ -20,6 +21,28 @@ export interface SenderAreaProps {
 
 export default function SenderArea(p: SenderAreaProps) {
   const { t } = useTranslation();
+  const { showHistory, setShowHistory } = p;
+
+  /* 2026-11-07 修「发送历史下拉不失焦消失」：showHistory 时常驻两个监听——
+   *  ① pointerdown（capture）点 wrapper 外即收；② Esc 收。▼ 按钮在 wrapper 内不受影响，
+   *  toggle 语义不破（点按钮 = pointerdown 在内不触发关 + click 正常翻转）。 */
+  const historyWrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showHistory) return;
+    const onDown = (e: PointerEvent) => {
+      if (!historyWrapRef.current?.contains(e.target as Node)) setShowHistory(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowHistory(false);
+    };
+    window.addEventListener("pointerdown", onDown, true);
+    // eslint-disable-next-line linkdesk/no-global-key-listener -- Esc 只关本下拉：无 preventDefault、不拦键，非「抢键」反模式（历史案是抢 F2）；CM 编辑器聚焦时 wrapper onKeyDown 收不到，窗口级是自绘浮层 Esc 收的唯一落点
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [showHistory, setShowHistory]);
 
   return (
     <div className="serial-monitor-sender-area">
@@ -31,7 +54,7 @@ export default function SenderArea(p: SenderAreaProps) {
         <div ref={p.sendEditorContainer} className="serial-monitor-send-editor-cm" />
       </div>
       <div className="serial-monitor-sender-actions">
-        <div className="serial-monitor-history-wrapper">
+        <div className="serial-monitor-history-wrapper" ref={historyWrapRef}>
           <button
             className={`serial-monitor-toolbar-btn${p.showHistory ? " active" : ""}`}
             onClick={() => p.setShowHistory(!p.showHistory)}
@@ -46,7 +69,7 @@ export default function SenderArea(p: SenderAreaProps) {
                 <div
                   key={i}
                   className="serial-monitor-history-item"
-                  onClick={() => p.onHistorySelect(h)}
+                  onClick={() => { p.onHistorySelect(h); p.setShowHistory(false); }}
                 >
                   {h}
                 </div>

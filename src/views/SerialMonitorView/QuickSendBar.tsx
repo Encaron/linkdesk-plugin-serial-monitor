@@ -72,7 +72,12 @@ export default function QuickSendBar(p: QuickSendBarProps) {
         <ContextMenu
           menuId={"quickSendContext"}
           anchor={{ x: p.qsCtxMenu.x, y: p.qsCtxMenu.y }}
-          context={{ quickSendName: p.qsCtxMenu.key }}
+          /* 2026-11-07 修右键空白：壳 getItems 对菜单项取 `item.when ?? cmd?.when` 过滤——
+           * quickSendDelete/Edit 被 serialCommands 以 when: "activeEditor == 'serial-monitor'"
+           * 抢先注册（首注册的 when 存活），本菜单原先只传 quickSendName ⇒ 右键时刻全局键不成立
+           * ⇒ 全被滤成空盒。context overrides 优先于全局键（ContextKeyService._readKey），
+           * 右键药丸必然在本视图内 ⇒ 补上即与语义成立。 */
+          context={{ quickSendName: p.qsCtxMenu.key, activeEditor: "serial-monitor" }}
           onClose={p.onCloseQsCtxMenu}
         />
       )}

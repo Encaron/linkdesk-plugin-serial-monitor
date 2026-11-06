@@ -146,7 +146,11 @@
   display: flex;
   justify-content: flex-end;
   gap: 4px;
-  padding: 4px 8px;
+  /* 2026-11-07 圆角裁角修：右缘留白随主题圆角走——发送/清空按钮贴死右下角（原 4px 8px）时，
+   * 用户拉大 surfaceRadius（0–32）或主题大圆角会把按钮右下角裁进容器圆角切割区。
+   * 几何：dx（距右缘）≥ 圆角半径 R 即离开切割区 ⇒ padding-right = R + 8px 恒安全；
+   * R=0 时退化为原 8px，零变化。 */
+  padding: 4px calc(var(--radius-lg, 8px) + 8px) 4px 8px;
 }
 
 .serial-monitor-history-wrapper {
@@ -192,7 +196,7 @@
 .serial-monitor-send-btn {
   background: var(--accent);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px); /* 2026-11-07：4px 硬编码 → 圆角 token（同 toolbar-btn 口径） */
   color: var(--text-on-accent);
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：serial-monitor-send-btn 12→sm */
   padding: 4px 20px;
