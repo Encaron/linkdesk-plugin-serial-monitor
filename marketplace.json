@@ -1,25 +1,31 @@
 {
   "version": "1",
-  "updatedAt": "2026-11-06T18:32:38.782Z",
+  "updatedAt": "2026-11-07T03:01:14.438Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.35",
+      "version": "1.0.36",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.35/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.36/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.35/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.36/resources/icon.svg",
       "marketIconSource": "url",
       "minAppVersion": "0.2.20",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.35/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.35/serial-monitor.linkdesk-plugin",
-      "size": 157050,
-      "publishedAt": "2026-11-06T18:32:38.782Z",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.36/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.36/serial-monitor.linkdesk-plugin",
+      "size": 157192,
+      "publishedAt": "2026-11-07T03:01:14.438Z",
       "versions": [
+        {
+          "version": "1.0.36",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.36/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-11-07T03:01:14.438Z",
+          "changelog": "- **按钮尺寸修正（收编回调）**：上一版收编壳共享按钮时误用了 22px 紧凑档（那是壳标题栏工具条专用尺寸），工具栏／发送栏／控制条／快捷发送全部按钮改回**标准档**——与「全部」下拉同排同高。\n- **图标与文字居中**：暂停接收等「图标＋文字」按钮补齐垂直居中。\n- **「关键字过滤」输入框与下拉同高**：度量对齐共享下拉触发器（随界面缩放同步），不再矮一截。\n- 要求 LinkDesk **0.2.20 或更高**（未变）。"
+        },
         {
           "version": "1.0.35",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.35/serial-monitor.linkdesk-plugin",
@@ -47,8 +53,7 @@
         {
           "version": "1.0.31",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.31/serial-monitor.linkdesk-plugin",
-          "publishedAt": "2026-09-30T22:00:58.903Z",
-          "changelog": "- **安装包瘦身**：包内更新日志只带最近 5 版（更早的更新记录仍在本插件仓库里）——由 SDK 自动施加，用户无需任何操作。"
+          "publishedAt": "2026-09-30T22:00:58.903Z"
         },
         {
           "version": "1.0.30",
