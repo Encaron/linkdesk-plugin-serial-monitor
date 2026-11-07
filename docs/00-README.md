@@ -7,6 +7,8 @@
 > 本夹 = 该插件的补丁档案集；命名取插件显示名「串口监视器」。⚠️ 与 [Serial-Simulator](https://github.com/Encaron/linkdesk/tree/electron/docs/05-%E6%8F%92%E4%BB%B6%E6%9B%B4%E6%96%B0/Serial-Simulator/README.md)（串口模拟器，另一个插件）不是一回事；也与 [终端系统](https://github.com/Encaron/linkdesk/tree/electron/docs/05-%E6%8F%92%E4%BB%B6%E6%9B%B4%E6%96%B0/%E7%BB%88%E7%AB%AF%E7%B3%BB%E7%BB%9F/00-README.md)（真 shell）不是一回事。
 > ⚠️ 本插件**今天不随包**（账 `bundled-plugins.lock.json` 里 `seed: false`，纯市场）——本档 §七 旧版「随包」那套说法已作废，订正见该段。
 
+> 🆕 **2026-11-07 起新档一项一子夹**：[01-右键菜单与底栏修缮/](./01-右键菜单与底栏修缮/00-README.md)（右键菜单空白修／发送历史失焦收／底栏防圆角裁角／按钮收编壳共享 Button 试验，随 1.0.34–1.0.36 三刀发版）。
+
 ## ○、收口读数（2026-09-29）
 
 | 项 | 读数 |
