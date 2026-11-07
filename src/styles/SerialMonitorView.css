@@ -93,6 +93,14 @@
  *  样式主权归 Button.css（壳组件零依赖插件样式的收编判据）。 */
 
 /* E5.8#30.12（P6）：接收区工具栏 per-tab TX/RX 计数——margin-left:auto 推到最右 */
+/* 2026-11-07 收编配套：图标＋文字按钮的内层对齐（壳 Button 基类无 display/align-items——只在 --sm 档；
+ *  缺省档由消费方自带，根修＝基类补齐，登记 04 随攒批）。 */
+.serial-monitor-btn-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .serial-monitor-receive-stats {
   margin-left: auto;
   align-self: center;
@@ -215,6 +223,10 @@
 /* === 关键字过滤输入 === */
 
 .serial-monitor-filter-keyword-input {
-  height: calc(24px * var(--ui-scale)); /* E5.8 Phase 12 #176：输入框 24px 乘 scale（§三.3） */
-  font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：12→sm */
+  /* 2026-11-07：与工具栏行高对齐——度量照抄共享 SelectBox 触发器（font-md×1.6，无固定高），
+   *  随 --ui-scale 自动缩放；写死 24px 高 + 小号字体的旧口径（比下拉矮一截）废弃 */
+  height: auto;
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  padding: 3px 6px;
 }

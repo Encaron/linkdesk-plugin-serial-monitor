@@ -56,10 +56,9 @@ export default function SenderArea(p: SenderAreaProps) {
       </div>
       <div className="serial-monitor-sender-actions">
         <div className="serial-monitor-history-wrapper" ref={historyWrapRef}>
-          {/* 2026-11-07 收编：自绘 → 壳共享 Button（ghost sm）；disabled 契约直通 */}
+          {/* 2026-11-07 收编：自绘 → 壳共享 Button（ghost）；disabled 契约直通 */}
           <Button
             variant="ghost"
-            size="sm"
             onClick={() => p.setShowHistory(!p.showHistory)}
             title={t("发送历史")}
             disabled={p.sendHistory.length === 0}
@@ -80,7 +79,7 @@ export default function SenderArea(p: SenderAreaProps) {
             </div>
           )}
         </div>
-        <Button variant="ghost" size="sm" onClick={p.onClearSend}>
+        <Button variant="ghost" onClick={p.onClearSend}>
           {t("清空发送区")}
         </Button>
         {/* 发送 = 主操作 ⇒ 缺省实心 accent（Button 双轨制实心轨） */}

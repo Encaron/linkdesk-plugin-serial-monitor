@@ -54,7 +54,6 @@ function ControlPanel({ sourceId }: { sourceId?: string }) {
       {/* 连接/断开按钮——2026-11-07 收编：自绘 → 壳共享 Button。语义映射照市场详情页动作层级：
        *  打开 = 正面主操作（实心 success）；断开 = 破坏性次级（danger 描边，不抢主操作眼）。 */}
       <Button
-        size="sm"
         variant={p.connected ? "danger" : "success"}
         onClick={p.handleToggleOpen}
         disabled={!p.hasSession}

@@ -27,20 +27,27 @@ export default function Toolbar(p: ToolbarProps) {
 
   return (
     <div className="serial-monitor-toolbar">
-      {/* 2026-11-07 收编：自绘 toolbar-btn → 壳共享 Button（ghost sm）。data-hint → title（Button 契约同义）。
-       *  active 高亮暂缺——暂停态由图标切换（debug-pause↔debug-start）表达，效果评估后再定去留。 */}
-      <Button variant="ghost" size="sm" onClick={p.onPause} title={t("暂停接收")}>
-        <span className={`codicon ${p.paused ? "codicon-debug-start" : "codicon-debug-pause"}`} />
-        {p.paused ? t("继续接收") : t("暂停接收")}
+      {/* 2026-11-07 收编：自绘 toolbar-btn → 壳共享 Button（ghost）。data-hint → title（Button 契约同义）。
+       *  active 高亮暂缺——暂停态由图标切换（debug-pause↔debug-start）表达，效果评估后再定去留。
+       *  图标＋文字用内层 flex 对齐：壳 Button 基类无 display/align-items（只在 --sm 档有），缺省档需自带（根修登记 04）。 */}
+      <Button variant="ghost" onClick={p.onPause} title={t("暂停接收")}>
+        <span className="serial-monitor-btn-inner">
+          <span className={`codicon ${p.paused ? "codicon-debug-start" : "codicon-debug-pause"}`} />
+          {p.paused ? t("继续接收") : t("暂停接收")}
+        </span>
       </Button>
 
-      <Button variant="ghost" size="sm" onClick={p.onExport} title={t("导出日志")}>
-        <span className="codicon codicon-export" />
-        {t("导出日志")}
+      <Button variant="ghost" onClick={p.onExport} title={t("导出日志")}>
+        <span className="serial-monitor-btn-inner">
+          <span className="codicon codicon-export" />
+          {t("导出日志")}
+        </span>
       </Button>
-      <Button variant="ghost" size="sm" onClick={p.onClear} title={t("清空接收区")}>
-        <span className="codicon codicon-clear-all" />
-        {t("清空接收区")}
+      <Button variant="ghost" onClick={p.onClear} title={t("清空接收区")}>
+        <span className="serial-monitor-btn-inner">
+          <span className="codicon codicon-clear-all" />
+          {t("清空接收区")}
+        </span>
       </Button>
       <SelectBox
         value={p.filterMode}
@@ -59,9 +66,11 @@ export default function Toolbar(p: ToolbarProps) {
         style={{ width: 110 }}
       />
 
-      <Button variant="ghost" size="sm" onClick={p.onToggleSearch} title={t("搜索")}>
-        <span className="codicon codicon-search" />
-        {t("搜索")}
+      <Button variant="ghost" onClick={p.onToggleSearch} title={t("搜索")}>
+        <span className="serial-monitor-btn-inner">
+          <span className="codicon codicon-search" />
+          {t("搜索")}
+        </span>
       </Button>
 
       {/* E5.8#30.12（P6）：per-tab TX/RX 计数——归位接收区工具栏（状态栏已删全局计数） */}

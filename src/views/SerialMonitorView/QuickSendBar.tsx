@@ -35,7 +35,6 @@ export default function QuickSendBar(p: QuickSendBarProps) {
           <Button
             key={name}
             variant="ghost"
-            size="sm"
             onClick={() => p.onQuickSend(content)}
             onContextMenu={(e) => p.onCtxMenu(name, e)}
             title={content}
@@ -59,11 +58,11 @@ export default function QuickSendBar(p: QuickSendBarProps) {
               onChange={(e) => p.setQsContent(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") p.onSave(); if (e.key === "Escape") { p.setQsAdding(false); p.setQsEditing(null); } }}
             />
-            <Button variant="ghost" size="sm" onClick={p.onSave}>{p.qsEditing ? <span className="codicon codicon-edit" /> : <span className="codicon codicon-check" />}</Button>
-            <Button variant="ghost" size="sm" onClick={() => { p.setQsAdding(false); p.setQsEditing(null); }}><span className="codicon codicon-close" /></Button>
+            <Button variant="ghost" onClick={p.onSave}>{p.qsEditing ? <span className="codicon codicon-edit" /> : <span className="codicon codicon-check" />}</Button>
+            <Button variant="ghost" onClick={() => { p.setQsAdding(false); p.setQsEditing(null); }}><span className="codicon codicon-close" /></Button>
           </div>
         ) : (
-          <Button variant="ghost" size="sm" title={t("添加快捷发送")} onClick={() => p.setQsAdding(true)}>
+          <Button variant="ghost" title={t("添加快捷发送")} onClick={() => p.setQsAdding(true)}>
             + {t("添加")}
           </Button>
         )}
