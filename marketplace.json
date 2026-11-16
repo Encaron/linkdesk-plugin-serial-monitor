@@ -1,25 +1,31 @@
 {
   "version": "1",
-  "updatedAt": "2026-11-07T03:01:14.438Z",
+  "updatedAt": "2026-11-16T22:07:28.991Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.36",
+      "version": "1.0.37",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.36/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.37/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.36/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.37/resources/icon.svg",
       "marketIconSource": "url",
       "minAppVersion": "0.2.20",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.36/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.36/serial-monitor.linkdesk-plugin",
-      "size": 157192,
-      "publishedAt": "2026-11-07T03:01:14.438Z",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.37/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.37/serial-monitor.linkdesk-plugin",
+      "size": 165393,
+      "publishedAt": "2026-11-16T22:07:28.991Z",
       "versions": [
+        {
+          "version": "1.0.37",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.37/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-11-16T22:07:28.991Z",
+          "changelog": "- **门外 AI 契约补齐（05 案第一批，一次改一次验一次发）**：两个真实工程的零知识外部 AI 用 CLI/MCP 调串口暴露的四组契约缺口，同笔补上。命令面 17 → 21 条（新增 reopen / mark / query / reset，全部无需视图在场）。\n- **A 状态可信**：readSince / receiveStatus 回执固定随行 `state:{paused, portOpen, devicePresent}`（读不到给 null 不猜）；receiveStatus 增每口 `lastDataAt / idleMs / devicePresent` 与顶层时点；listSessions 增 `stale`（表里说开着、设备其实没了）；新命令 `reopen` 拔插后一步恢复；openPort 遇「表里开着而设备已消失」的僵尸句柄⇒清掉并如实回 EDEVICE（不再 alreadyOpen 撒谎）；重开清暂停缓冲改为**丢弃出声**（一行系统提示，清空行为保留）。\n- **B① 缓冲查询**：readSince 取法三选一（since / tail / afterMark 互斥），**缺省不再回放 200 行历史**（改回 cursor-required，旧日志当新现象的根）；显式 since:0 / tail 带 history:true；prefix / grep 服务端过滤（游标照常前进，回 scanned/matched）；limit 超上限钳到 1000 并回 truncated:true（不再报坏参也不静默截）。\n- **C 等待原语**：新命令 `mark`（命名游标，同名覆盖回 previous）；readSince 支持 afterMark（未知⇒ENOMARK）与 untilRegex+timeoutMs（服务端阻塞等一行，超时是正常结局 matched:false, timedOut:true）；新命令 `query`（发＋等应答一次调用，子串匹配；同口并发⇒EBUSY；超时带回沿途已收到的行）。\n- **D1 时间基**：接收日志条目增单调 `uptimeMs`（以本口最近一次 openPort 为原点，重连后从 0 附近重来；原点未知 null）——跨重连判「新数据」。\n- **E 复位**：新命令 `reset`（DTR/RTS 电气复位，拉低→等 holdMs（缺省 100）→拉高，both 同相；tookMs < 1s）——替代「重烧录 20 秒当复位」；meta 写明板子需接复位电路。\n- 要求 LinkDesk **0.2.20 或更高**（未变）。"
+        },
         {
           "version": "1.0.36",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.36/serial-monitor.linkdesk-plugin",
@@ -47,8 +53,7 @@
         {
           "version": "1.0.32",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.32/serial-monitor.linkdesk-plugin",
-          "publishedAt": "2026-10-01T16:05:50.707Z",
-          "changelog": "- **适配新版「开始」卡准入**：`plugin.json` 的 `appearsIn` 新增 `standaloneOpenable: true`——本插件在主区有自己可看的内容，故继续出现在欢迎页「开始」卡与标签栏「+」创建菜单里。不声明它，新版壳会把本插件从这两处收起（插件本身仍可从命令面板、最近打开、会话恢复等途径打开）。本次对用户无观感变化。"
+          "publishedAt": "2026-10-01T16:05:50.707Z"
         },
         {
           "version": "1.0.31",
