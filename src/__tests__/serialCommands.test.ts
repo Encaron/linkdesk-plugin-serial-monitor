@@ -126,11 +126,11 @@ function resetWorld(): void {
 beforeEach(resetWorld);
 
 describe("命令注册面", () => {
-  it("17 条插件级命令全部注册（九条动作/读数 ＋ 两条寻址读 ＋ 六条会话态开关）", () => {
+  it("21 条插件级命令全部注册（九条动作/读数 ＋ 两条寻址读 ＋ 六条会话态开关 ＋ 05 案四条 reopen/mark/query/reset）", () => {
     // ⚠️ 声明面的 `description` / `params` 覆盖**不在这里断言**：本仓 tsconfig 不带 node 类型，
     //    读 `plugin.json` 会引入 `node:fs` / `process` 的类型错。那条判据的机械尺子是
     //    壳仓 `scripts/audit-plugin-commands.mjs`（AI#28）——跨仓验收时跑它，别在本文件写第二把。
-    expect(registerSerialCommands()).toBe(17);
+    expect(registerSerialCommands()).toBe(21);
     for (const id of [
       "serial-monitor.openPort", "serial-monitor.closePort", "serial-monitor.closeSession",
       "serial-monitor.setSendCoding", "serial-monitor.send",
@@ -139,6 +139,7 @@ describe("命令注册面", () => {
       "serial-monitor.listPorts", "serial-monitor.listSessions",
       "serial-monitor.toggleSendMode", "serial-monitor.toggleEcho", "serial-monitor.toggleLineNumbers",
       "serial-monitor.toggleSystemLog", "serial-monitor.toggleAutoRepeat", "serial-monitor.toggleAutoClear",
+      "serial-monitor.reopen", "serial-monitor.mark", "serial-monitor.query", "serial-monitor.reset",
     ]) {
       expect(handlers.has(id), `${id} 未注册`).toBe(true);
     }
@@ -216,8 +217,9 @@ describe("AI#23 判据①：打开端口——三处一起动（与手点同链�
     expect(cmdLeg.lamp).toContainEqual(["serial-monitor", "COM3:isOpen", true]);
   });
 
-  it("口已开时再开 = 不动（不是翻转）：如实回 alreadyOpen，灯不重复写", async () => {
+  it("口已开时再开 = 不动（不是翻转）：如实回 alreadyOpen，灯不重复写（设备在场——05 案 A-5 的前提）", async () => {
     const open = handlers.get("serial-monitor.openPort")!;
+    portsReply = [{ name: "COM3", description: "USB-SERIAL" }]; // 设备在场 ⇒ already-open 走「不动」那条
     await open({ portName: "COM3", baudRate: 115200 });
     stateWrites = [];
     openArgs = [];
@@ -607,6 +609,7 @@ describe("AI#68 端口面的两个谎：猜靶子（openPort）与认错人（cl
 
   it("已在开时再开 ⇒ 回 alreadyOpen，但 previousPortName 仍是「这条会话现在绑的口」（读得出动没动）", async () => {
     twoSessionsBound();
+    portsReply = [{ name: "COM3", description: "USB-SERIAL" }]; // 设备在场 ⇒ 走 already-open（05 案 A-5 前提）
     await openPortFromModule({ portName: "COM3", baudRate: 115200 });
 
     const res = await handlers.get("serial-monitor.openPort")!({ portName: "COM3", sessionId: "s-1" }) as {

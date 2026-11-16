@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@linkdesk/plugin-sdk/schemas/plugin.schema.json",
   "pluginId": "serial-monitor",
   "name": "串口监视器",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "minAppVersion": "0.2.20",
   "icon": "resources/icon-bar.svg",
   "marketIcon": "resources/icon.svg",
@@ -259,7 +259,7 @@
         "title": "打开端口",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "打开串口端口——可指定 COM 口 / 波特率 / 帧格式（数据位·停止位·校验）；与界面点「打开」走同一条链路（侧栏灯、会话表一起动）。已在开则不动。无需视图在场。⚠️ 多会话下给 portName 必须同时点 sessionId：只给 portName 会改绑「当前活跃会话」的口，而活跃会话随前台标签页变（同一条命令两种结果）——这种调用会被拒，报错里带各会话当前绑的口与修法。回执带 previousPortName（本次改绑前那个口，原本未绑为 null）。",
+        "description": "打开串口端口——可指定 COM 口 / 波特率 / 帧格式（数据位·停止位·校验）；与界面点「打开」走同一条链路（侧栏灯、会话表一起动）。已在开则不动（设备在场时）；若表里开着而设备已从串口清单消失（拔线残留的僵尸句柄）⇒ 清掉句柄并如实回 {ok:false, code:EDEVICE}——不再「报已被打开」撒谎；设备插回后用 serial-monitor.reopen 一步恢复。无需视图在场。⚠️ 多会话下给 portName 必须同时点 sessionId：只给 portName 会改绑「当前活跃会话」的口，而活跃会话随前台标签页变（同一条命令两种结果）——这种调用会被拒，报错里带各会话当前绑的口与修法。回执带 previousPortName（本次改绑前那个口，原本未绑为 null）。",
         "params": [
           {
             "name": "args",
@@ -346,22 +346,52 @@
         "title": "读取接收数据",
         "category": "串口监视器",
         "when": "false",
-        "description": "拉取式读数——把接收日志里「游标之后」的数据按到达顺序读回来（游标 = 上一次回执里的 cursor）。⛔ 不是订阅：一问一答，配 CLI/MCP 的请求/响应形状。回执三态：有新数据 {ok:true, items, cursor, count, lost} / 没有新的 {ok:true, noop:true, reason:no-new-data} / 调用不成立 {ok:false, noop:true, reason:bad-since|bad-limit|bad-port|cursor-ahead}。lost = 已滚出缓冲、读不到的条数（大于 0 说明你落后了；含他口——游标是全局面上的位置）。每条 item 带 seq / portName / text（wire 原样）/ hex / ts。无需视图在场；串口仍由本软件持有，AI 不自己开。when=false：纯程序化命令，不进命令面板。",
+        "description": "拉取式读数——把接收日志里「取法指定那段」的数据按到达顺序读回来（游标 = 上一次回执里的 cursor）。⛔ 不是订阅：一问一答，配 CLI/MCP 的请求/响应形状。取法三选一（互斥）：since（游标）/ tail（最近 N 条）/ afterMark（命名游标）；prefix / grep 是正交过滤器（服务端做，游标照常前进，回执带 scanned/matched）。⚠️ 什么都不传 ⇒ {ok:true, noop:true, reason:cursor-required, cursor:当前水位}——**不再回放 200 行历史**（旧日志当新现象是误判根）；要整个缓冲显式传 since:0（回执带 history:true）。回执三态：有新数据 {ok:true, items, cursor, count, lost} / 没有新的 {ok:true, noop:true, reason:no-new-data} / 调用不成立 {ok:false, noop:true, reason:bad-since|bad-tail|bad-limit|bad-port|bad-prefix|bad-grep|bad-until|bad-timeout|mode-conflict|cursor-ahead|no-serial-face} 或失败 {ok:false, code:EBADARGS|ENOMARK|EDEVICE}。lost = 已滚出缓冲、读不到的条数（大于 0 说明你落后了；含他口——游标是全局面上的位置）；limit 超上限（1000）⇒ 钳到上限并回 truncated:true（不静默截）。每条 item 带 seq / portName / text（wire 原样）/ hex / ts / uptimeMs（以本口最近一次 openPort 为原点的单调毫秒数，重连后从 0 附近重来；原点未知为 null）。回执随行 state:{paused, portOpen, devicePresent}（点名 portName，或恰有一条绑口会话时能给；口定不下来为 null）——⚠️ paused 是**视图暂停**（只冻结界面显示），AI 读数不受它影响、数据照收。untilRegex：服务端阻塞等一行命中，timeoutMs 必填（1–60000 毫秒，⛔ 不设无限等）且要小于 CLI/命令层超时，否则命令层先超时看不到 timedOut；命中 {ok:true, matched:true, line, cursor, tookMs}，超时 {ok:true, matched:false, timedOut:true, cursor, tookMs}（超时不是错误）。无需视图在场；串口仍由本软件持有，AI 不自己开。when=false：纯程序化命令，不进命令面板。",
         "params": [
           {
             "name": "since",
             "type": "number",
-            "description": "游标——上一次回执里的 cursor；缺省 0 = 从缓冲里最老一条读起"
+            "description": "取法① 游标——上一次回执里的 cursor；显式 0 = 整个缓冲（回 history:true）。缺省（不传任何取法）⇒ cursor-required，不回放历史"
+          },
+          {
+            "name": "tail",
+            "type": "number",
+            "description": "取法② 读最近 N 条（刷屏后取尾部用这个；不受 limit 上限约束，仍受缓冲容量 2000 约束）——与 since/afterMark 互斥"
+          },
+          {
+            "name": "afterMark",
+            "type": "string",
+            "description": "取法③ 从命名游标之后读（先 serial-monitor.mark 打点）——不存在 ⇒ {ok:false, code:ENOMARK}；与 since/tail 互斥"
           },
           {
             "name": "limit",
             "type": "number",
-            "description": "本次最多取几条（1–1000，缺省 200）"
+            "description": "本次最多取几条（1–1000，缺省 200）——超上限钳到 1000 并回 truncated:true"
           },
           {
             "name": "portName",
             "type": "string",
             "description": "只看这个口（缺省 = 所有口）——游标仍按全局位置前进"
+          },
+          {
+            "name": "prefix",
+            "type": "string",
+            "description": "行前缀过滤（服务端）——游标照常前进，回执带 scanned（检查了几条）/matched（命中几条）"
+          },
+          {
+            "name": "grep",
+            "type": "string",
+            "description": "行正则过滤（服务端）——同 prefix"
+          },
+          {
+            "name": "untilRegex",
+            "type": "string",
+            "description": "服务端阻塞等一行命中此正则——timeoutMs 必填；起点可用 since/afterMark 定（缺省 = 只看新到的）"
+          },
+          {
+            "name": "timeoutMs",
+            "type": "number",
+            "description": "untilRegex 的等待上限（1–60000 毫秒，必填）——须小于 CLI/命令层超时"
           }
         ]
       },
@@ -370,14 +400,14 @@
         "title": "接收面水位",
         "category": "串口监视器",
         "when": "false",
-        "description": "读接收面的水位（不拉数据）：当前游标 cursor、缓冲里最老一条的序号 first、保留条数 count、容量 capacity，以及每口 {portName, count, open}——口开态读主进程 getStatus（真源）。AI 用它分辨「口没开」与「开了但设备没说话」，再决定拉不拉。无需视图在场。when=false：纯程序化命令，不进命令面板。"
+        "description": "读接收面的水位（不拉数据）：当前游标 cursor、缓冲里最老一条的序号 first、保留条数 count、容量 capacity、全局面最近一次收到数据的时刻 lastDataAt 与距它 idleMs（从未收到为 null），以及每口 {portName, count, open, devicePresent, lastDataAt, idleMs, state:{paused, portOpen, devicePresent}}——口开态读主进程 getStatus（真源）；devicePresent 由插件枚举串口清单判断（拔掉即 false，读不到为 null 不猜）；paused 是视图暂停（只冻结界面显示，AI 读数不受影响；没挂视图为 null）。AI 用它分辨「口没开 / 开了但设备没说话 / 设备已拔 / 界面被暂停」，再决定拉不拉。无需视图在场。when=false：纯程序化命令，不进命令面板。"
       },
       {
         "id": "serial-monitor.listSessions",
         "title": "列出串口会话",
         "category": "串口监视器",
         "when": "false",
-        "description": "读会话面：有哪几条会话、谁是活跃会话、每条的口与收发设置现况（sessionId / name / portName / open / viewMounted / paused / baudRate / sendMode / sendCoding / receiveCoding / showEcho / showLineNumbers / separateSystemLog / autoRepeat / autoClear）。🔴 多串口下会话是**多条并立**的（每条一个口、一套设置、一个标签页）——要用会话相关命令（toggle* / setSendCoding / closeSession…）先读这里拿 sessionId。viewMounted = 该会话此刻有没有挂载标签页（视图态命令如 copy / clear / togglePause 要靠它）；paused 没挂载时如实回 null（⛔ 不报 false 假装问过）。无需视图在场。when=false：纯程序化命令，不进命令面板。"
+        "description": "读会话面：有哪几条会话、谁是活跃会话、每条的口与收发设置现况（sessionId / name / portName / open / devicePresent / stale / viewMounted / paused / baudRate / sendMode / sendCoding / receiveCoding / showEcho / showLineNumbers / separateSystemLog / autoRepeat / autoClear）。🔴 多串口下会话是**多条并立**的（每条一个口、一套设置、一个标签页）——要用会话相关命令（toggle* / setSendCoding / closeSession…）先读这里拿 sessionId。viewMounted = 该会话此刻有没有挂载标签页（视图态命令如 copy / clear / togglePause 要靠它）；paused 没挂载时如实回 null（⛔ 不报 false 假装问过）。05 案：devicePresent = 这个口的设备还在不在串口清单里（拔掉即 false，读不到为 null）；stale = open 为 true 且 devicePresent 确认为 false（「表里说开着，设备其实没了」——拔插 USB 后用这条判谁需要 reopen）。无需视图在场。when=false：纯程序化命令，不进命令面板。"
       },
       {
         "id": "serial-monitor.listPorts",
@@ -385,6 +415,62 @@
         "category": "串口监视器",
         "when": "false",
         "description": "读硬件面：这台机器上现在有哪几个串口（与界面「端口」下拉同一条腿，读数不可能与 UI 分叉）。每条回 {portName, description, open, sessionId}——open = 插件的 per-port 权威态（侧栏灯同一份），sessionId = 这个口绑在哪条会话上（没绑则 null）。🔴 要指定口做事时先读这里挑 portName（再去 listSessions 拿 sessionId）：门③ 只有 exec，别猜口名。一个口都没有 ⇒ 如实回 {ok:true,count:0,ports:[]}（不是报错）；读口失败 ⇒ 载荷里出声 {ok:false,noop:true,reason:read-failed}——「问不出来」不等于「没有口」。无需视图在场。when=false：纯程序化命令，不进命令面板。"
+      },
+      {
+        "id": "serial-monitor.reopen",
+        "title": "重开端口",
+        "category": "串口监视器",
+        "when": "false",
+        "description": "拔插 USB 后一步恢复：closePort → 等一小段（200ms）→ openPort（同一会话、同参数——波特率/帧格式/编码从属主会话读起）。成功回 {ok:true, sessionId, portName, recovered:true, tookMs}。设备不在（串口清单里没有这个口）⇒ {ok:false, code:EDEVICE, hint}——⛔ 不做自动重连轮询；端口号可能变，先 serial-monitor.listPorts 核对再点名 portName。端口没绑在任何会话上 ⇒ ENOSESSION（参数无从读起）。设备在场但怀疑句柄已死（拔插另一种残留）也用它显式重开。无需视图在场。when=false：纯程序化命令，不进命令面板。",
+        "params": [
+          {
+            "name": "args",
+            "type": "object",
+            "description": "{ portName?, sessionId? }——缺省取活跃会话的口"
+          }
+        ]
+      },
+      {
+        "id": "serial-monitor.mark",
+        "title": "标记游标",
+        "category": "串口监视器",
+        "when": "false",
+        "description": "给当前游标水位起名（命名游标，存插件内存——池页面 reload 即失效）：serial-monitor.mark {\"name\":\"boot-start\"} → {ok:true, name, cursor, sessionId, previous}。同名覆盖，previous = 覆盖前的旧游标；cursor 一并返回，调用方想自己存也行。之后 serial-monitor.readSince {\"afterMark\":\"boot-start\"} 从这里往后读；mark 不存在 ⇒ {ok:false, code:ENOMARK}。无需视图在场。when=false：纯程序化命令，不进命令面板。",
+        "params": [
+          {
+            "name": "args",
+            "type": "object",
+            "description": "{ name: 非空字符串, sessionId? }"
+          }
+        ]
+      },
+      {
+        "id": "serial-monitor.query",
+        "title": "发送并等待应答",
+        "category": "串口监视器",
+        "when": "false",
+        "description": "发一条指令并等服务端收到应答——一次调用替代「send → 睡 → readSince」三步（竞态由服务端消化）。内部：记游标 → sendText（按会话发送编码）→ 服务端阻塞等 expect（**子串匹配**，AT 应答里的正则元字符不误伤）→ 回命中行与沿途收到的行。命中 {ok:true, matched:true, line, lines, elapsedMs, cursor}；超时 {ok:true, matched:false, timedOut:true, lines, elapsedMs, cursor}（lines = 已收到的内容，超时不是错误）；同一口并发 query ⇒ {ok:false, code:EBUSY}（⛔ 不排队）；发送失败 ⇒ ESENDFAIL；等待中设备被拔 ⇒ EDEVICE。timeoutMs 必填（1–60000 毫秒，⛔ 不设无限等）且要小于 CLI/命令层超时。无需视图在场。when=false：纯程序化命令，不进命令面板。",
+        "params": [
+          {
+            "name": "args",
+            "type": "object",
+            "description": "{ send: 指令文本, expect: 应答子串, timeoutMs: 毫秒, portName?, sessionId? }"
+          }
+        ]
+      },
+      {
+        "id": "serial-monitor.reset",
+        "title": "复位板子",
+        "category": "串口监视器",
+        "when": "false",
+        "description": "用 DTR/RTS 电气复位板子（只调既有串口能力，零新 IPC）：拉低 → 等 holdMs（缺省 100ms）→ 拉高；method=both 时 DTR 与 RTS 同相同步拉。成功回 {ok:true, portName, method, holdMs, tookMs}（tookMs < 1 秒——替代「重烧录 20 秒当复位」）。⚠️ 这是电气复位：板子要接了复位电路才生效（常见开发板都接了；没接时命令成功但板子不会重启——这是硬件事实，不是错误）。端口没开 ⇒ {ok:false, code:ENOPORT}。无需视图在场。when=false：纯程序化命令，不进命令面板。",
+        "params": [
+          {
+            "name": "args",
+            "type": "object",
+            "description": "{ method: dtr|rts|both, holdMs?: 缺省100（1–5000）, portName?, sessionId? }"
+          }
+        ]
       }
     ],
     "menus": {

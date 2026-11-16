@@ -25,6 +25,23 @@ export const SEND_EDITOR_MIN_HEIGHT = 32;
 export const SEND_MODE_TEXT = "text";
 export const SEND_MODE_HEX = "hex";
 
+/* ── 05 案（门外 AI 契约补齐）常量——A/B/C/E 组共用的数值单点 ── */
+/** `reopen`（A-4）关 → 开之间的间隔（等驱动释放句柄） */
+export const REOPEN_GAP_MS = 200;
+/** `untilRegex` / `query`（C-3/C-4）服务端阻塞等待的轮询间隔 */
+export const WAIT_POLL_MS = 50;
+/** 等待循环每多少个 tick 查一次设备在场（≈500ms）——等待中拔线要立即结束（03 E19），但不必每 tick 都查 */
+export const WAIT_DEVICE_CHECK_TICKS = 10;
+/** 等待类参数 `timeoutMs` 上限（⛔ 不设无限等——命令层超时必须大于它，meta 里写明关系） */
+export const WAIT_TIMEOUT_MS_MAX = 60000;
+/** `reset`（E-1）缺省/上限拉低时长 */
+export const RESET_HOLD_MS_DEFAULT = 100;
+export const RESET_HOLD_MS_MAX = 5000;
+/** `reset` 的 method 取值（单点真相源，命令校验与声明面同一份措辞） */
+export const RESET_METHOD_DTR = "dtr";
+export const RESET_METHOD_RTS = "rts";
+export const RESET_METHOD_BOTH = "both";
+
 /** 收发编码可选集——**单点真相源**：侧栏「收发设置」两个下拉（接收/发送编码）与命令面
  *  `serial-monitor.setSendCoding` 的取值校验都读这一份（⛔ 别再写第二份数组：
  *  两处一旦分叉，「命令设得进、下拉选不出」就是新的不一致）。 */

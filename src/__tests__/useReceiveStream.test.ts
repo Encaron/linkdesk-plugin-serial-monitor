@@ -304,6 +304,30 @@ describe("serial-system 的两条分支", () => {
     expect(emitSpy).toHaveBeenCalledWith("serial:connected", { portName: "COM_TEST_1", baudRate: 115200 });
   });
 
+  it("05 案 A7：暂停中重开 ⇒ 清缓冲前点数，丢弃出声（一行系统提示，不复位成静默）", async () => {
+    const { result, ringRef } = setup();
+    act(() => { result.current.handlePause(); });
+    feed({ portName: "COM_TEST_1", text: "a" });
+    feed({ portName: "COM_TEST_1", text: "b" });
+    frame();
+    expect(result.current.pausedCount).toBe(2);
+
+    // ⚠️ 在 act 回调内**同步**抓环：假时钟下暂停时代遗留的 rAF 闭包（paused=true）会在 act 刷新期
+    //    抢跑把行卷进暂停缓冲（真机里 effect cleanup 会 cancel 它，行照常渲染或随恢复补回——不丢）；
+    //    「未暂停系统行 → renderLine」的投递由上面他口 status / 关闭 两例覆盖，这里只断言契约本体：
+    //    清空行为保留（新会话不带旧数据），但丢弃必须出声——03 清单：漏一条就是一个「静默假死」。
+    let captured: Array<{ text: string; type: string }> = [];
+    await act(async () => {
+      systemCb?.({ portName: "COM_TEST_1", message: "端口 COM_TEST_1 已打开", type: "status" });
+      captured = ringRef.current.drainAll().map((it) => ({ text: it.text, type: it.type }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const dropped = captured.find((it) => it.type === "system" && it.text.includes("丢弃暂停缓冲"));
+    expect(dropped?.text).toBe("已打开：丢弃暂停缓冲 {{count}} 条::2");
+    expect(result.current.pausedCount).toBe(0);
+  });
+
   it("开端口即发初始化序列（sendInitOnOpen）⇒ 按 quickSends 顺序逐条 performSend", async () => {
     const performSend = vi.fn(() => Promise.resolve());
     setup({ settings: settings({ sendInitOnOpen: true, quickSends: { A: "AAA", B: "BBB" } }), performSend });

@@ -1,5 +1,15 @@
 # 更新日志
 
+## v1.0.37（2026-11-17）
+
+- **门外 AI 契约补齐（05 案第一批，一次改一次验一次发）**：两个真实工程的零知识外部 AI 用 CLI/MCP 调串口暴露的四组契约缺口，同笔补上。命令面 17 → 21 条（新增 reopen / mark / query / reset，全部无需视图在场）。
+- **A 状态可信**：readSince / receiveStatus 回执固定随行 `state:{paused, portOpen, devicePresent}`（读不到给 null 不猜）；receiveStatus 增每口 `lastDataAt / idleMs / devicePresent` 与顶层时点；listSessions 增 `stale`（表里说开着、设备其实没了）；新命令 `reopen` 拔插后一步恢复；openPort 遇「表里开着而设备已消失」的僵尸句柄⇒清掉并如实回 EDEVICE（不再 alreadyOpen 撒谎）；重开清暂停缓冲改为**丢弃出声**（一行系统提示，清空行为保留）。
+- **B① 缓冲查询**：readSince 取法三选一（since / tail / afterMark 互斥），**缺省不再回放 200 行历史**（改回 cursor-required，旧日志当新现象的根）；显式 since:0 / tail 带 history:true；prefix / grep 服务端过滤（游标照常前进，回 scanned/matched）；limit 超上限钳到 1000 并回 truncated:true（不再报坏参也不静默截）。
+- **C 等待原语**：新命令 `mark`（命名游标，同名覆盖回 previous）；readSince 支持 afterMark（未知⇒ENOMARK）与 untilRegex+timeoutMs（服务端阻塞等一行，超时是正常结局 matched:false, timedOut:true）；新命令 `query`（发＋等应答一次调用，子串匹配；同口并发⇒EBUSY；超时带回沿途已收到的行）。
+- **D1 时间基**：接收日志条目增单调 `uptimeMs`（以本口最近一次 openPort 为原点，重连后从 0 附近重来；原点未知 null）——跨重连判「新数据」。
+- **E 复位**：新命令 `reset`（DTR/RTS 电气复位，拉低→等 holdMs（缺省 100）→拉高，both 同相；tookMs < 1s）——替代「重烧录 20 秒当复位」；meta 写明板子需接复位电路。
+- 要求 LinkDesk **0.2.20 或更高**（未变）。
+
 ## v1.0.36（2026-11-07）
 
 - **按钮尺寸修正（收编回调）**：上一版收编壳共享按钮时误用了 22px 紧凑档（那是壳标题栏工具条专用尺寸），工具栏／发送栏／控制条／快捷发送全部按钮改回**标准档**——与「全部」下拉同排同高。

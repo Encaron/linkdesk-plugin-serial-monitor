@@ -16,6 +16,8 @@
 
 import type { HandshakeState, PortInfo, SerialFrame } from "./types";
 import { mergeStatus } from "./status";
+// 05 案 D1：openPort 原点——接收日志 `uptimeMs` 的单调时间基（重开 = 覆盖，跨重连判「新数据」）
+import { notePortOpened } from "../receiveLog";
 import {
   accumulatePortStats, _notifyPort, _setState, _writePortState,
   deleteOpenPort, getSharedState, setOpenPort,
@@ -158,6 +160,8 @@ export async function openPortFromModule(o: OpenPortRequest): Promise<boolean> {
     portName, baudRate, encoding: o.encoding,
     dataBits: o.frame?.dataBits, stopBits: o.frame?.stopBits, parity: o.frame?.parity,
   });
+  // 05 案 D1：打开成功即记 uptimeMs 原点（本口最近一次 openPort）——重开覆盖，单调时间基
+  notePortOpened(portName);
   // E5.8#30.18：打开时应用握手信号初始电平（DTR/RTS）——非致命，失败只记日志不阻断开串口
   if (o.handshake) {
     s.setDtr?.(o.handshake.dtr, portName).catch((e) => console.error("[serial-monitor] 应用 DTR 初始电平失败:", e));

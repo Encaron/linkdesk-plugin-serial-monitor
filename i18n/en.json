@@ -76,6 +76,7 @@
   "---- 继续显示：补回暂停期间的 {{count}} 条数据 ----": "---- Resumed: restored {{count}} buffered lines ----",
   "---- 继续显示 ----": "---- Resumed ----",
   "---- 暂停显示：界面已冻结，后台照常接收 ----": "---- Paused: display frozen, receiving in background ----",
+  "已打开：丢弃暂停缓冲 {{count}} 条": "Port opened: discarded {{count}} paused-buffer lines",
   "---- 日志已导出至 {{filename}} ----": "---- Log exported to {{filename}} ----",
   "⏸ 已暂停 · {{count}} 条缓冲": "⏸ Paused · {{count}} buffered",
   "---- 快捷发送「{{name}}」已添加 ----": "---- Quick send \"{{name}}\" added ----",
@@ -141,5 +142,9 @@
   "会话": "Session",
   "开": "On",
   "关": "Off",
-  "新会话": "New Session"
+  "新会话": "New Session",
+  "重开端口": "Reopen port",
+  "标记游标": "Mark cursor",
+  "发送并等待应答": "Send and await reply",
+  "复位板子": "Reset board"
 }

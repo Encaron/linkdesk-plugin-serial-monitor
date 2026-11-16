@@ -6,6 +6,7 @@
  */
 
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useIpcEvent } from "../../hooks/useIpcEvent";
 import type { SerialDataPayload, SerialSystemPayload } from "@linkdesk/contracts";
 import { matchesPort } from "../../utils/portFilter";
@@ -31,6 +32,7 @@ export interface SerialIpcEventsOptions {
 
 export function useSerialIpcEvents(o: SerialIpcEventsOptions): void {
   const { sourceId, settings, ringBuffer, performSend, saveReceiveToFile, pausedBuffer, setPaused, setPausedCount } = o;
+  const { t } = useTranslation();
 
   const tsFormatRef = useRef(settings.timestampFormat);
   tsFormatRef.current = settings.timestampFormat;
@@ -80,9 +82,19 @@ export function useSerialIpcEvents(o: SerialIpcEventsOptions): void {
     }
 
     if (/已打开/.test(msg)) {
+      // 05 案 A7：清暂停缓冲前先点数——重开丢弃（清空行为保留，那是「新会话不带旧数据」的合理语义）
+      // 但**丢弃必须出声**（03 清单：漏一条就是一个「静默假死」）。行写在清空之后 ⇒ paused 已复位，能当场
+      // 渲染出来；即使暂停时代遗留的 rAF 闭包抢先一帧把它卷进暂停缓冲，也只是随恢复补回——不丢。
+      const droppedPaused = pausedBuffer.current.length;
       pausedBuffer.current = [];
       setPausedCount(0);
       setPaused(false);
+      if (droppedPaused > 0) {
+        ringBuffer.current.write({
+          text: t("已打开：丢弃暂停缓冲 {{count}} 条", { count: droppedPaused }),
+          type: "system",
+        });
+      }
       // E5.8#30.21：打开即发初始化序列——归一化复用 quickSends（不新建平行概念），打开时按序自动发送（per-COM 记忆）。
       // 复用 handleQuickSend 同款 performSend 路径（ending/prefix 一致）；performSend 内部 try/catch，逐条 await 串行不丢序
       if (settings.sendInitOnOpen) {

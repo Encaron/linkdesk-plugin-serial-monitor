@@ -53,14 +53,20 @@ import {
   createSessionModule, getActiveSessionId, getSessionById, getSessions,
   removeSessionById, updateSessionById,
 } from "../hooks/useSerialSessions";
-import { SERIAL_CODINGS, SEND_MODE_HEX, SEND_MODE_TEXT, RECEIVE_LOG_MAX, RECEIVE_READ_LIMIT_DEFAULT, RECEIVE_READ_LIMIT_MAX } from "../constants";
+import {
+  SERIAL_CODINGS, SEND_MODE_HEX, SEND_MODE_TEXT, RECEIVE_LOG_MAX, RECEIVE_READ_LIMIT_DEFAULT, RECEIVE_READ_LIMIT_MAX,
+  REOPEN_GAP_MS, WAIT_POLL_MS, WAIT_DEVICE_CHECK_TICKS, WAIT_TIMEOUT_MS_MAX,
+  RESET_HOLD_MS_DEFAULT, RESET_HOLD_MS_MAX, RESET_METHOD_DTR, RESET_METHOD_RTS, RESET_METHOD_BOTH,
+} from "../constants";
 import { getOpenPorts, hasOpenPort } from "./SerialContext/store";
 import {
   closePortFromModule, openPortFromModule, refreshPortsFromModule,
 } from "./SerialContext/ipc";
 import type { PortInfo } from "./SerialContext/types";
 // AI#64：接收面读数（游标式拉取）——日志属主在 receiveLog，本文件只做参数归一 ＋ 回执成形
-import { _receiveLog, readReceiveLog, receiveLogFirst } from "./receiveLog";
+// 05 案起读数走 queryReceiveLog（since/tail/过滤一躺循环）；readReceiveLog 留给旧测试与兼容
+import { _receiveLog, queryReceiveLog, receiveLogFirst } from "./receiveLog";
+import type { ReceiveLogItem } from "./receiveLog";
 // AI#67：会话寻址读数要报「这条会话此刻有没有挂载视图」（视图态命令的可用性）——_cmdMap 是那个事实的属主
 import { _cmdMap } from "./commandBridge";
 
@@ -85,6 +91,36 @@ export interface PortTargetArgs {
   sessionId?: string;
 }
 
+/** 05 案 C-1 `mark` 入参 */
+export interface MarkArgs {
+  /** 游标名（非空）——同名覆盖，回执带 previous 旧游标 */
+  name?: string;
+  /** 上下文会话（缺省不绑会话——游标本身是全局面上的位置） */
+  sessionId?: string;
+}
+
+/** 05 案 C-4 `query` 入参——发 ＋ 等应答，一次调用 */
+export interface QueryArgs {
+  /** 要发的指令（文本，按会话发送编码走 sendText） */
+  send?: string;
+  /** 等的应答（**子串匹配**——AT 指令的应答里常有正则元字符，字面子串更不会误伤） */
+  expect?: string;
+  /** 等待上限（毫秒，必填）——须小于 CLI/命令层超时 */
+  timeoutMs?: number;
+  portName?: string;
+  sessionId?: string;
+}
+
+/** 05 案 E-1 `reset` 入参——DTR/RTS 电气复位 */
+export interface ResetArgs {
+  /** 复位法：dtr | rts | both（both = 同相同步拉） */
+  method?: string;
+  /** 拉低时长（毫秒，缺省 100） */
+  holdMs?: number;
+  portName?: string;
+  sessionId?: string;
+}
+
 export interface CloseSessionArgs {
   /** 会话 id（缺省：活跃会话） */
   sessionId?: string;
@@ -102,24 +138,43 @@ export interface SetCodingArgs {
 
 /** 接收面拉取入参——`linkdeskctl exec serial-monitor.readSince '{"since":0,"limit":50}'` */
 export interface ReadSinceArgs {
-  /** 游标——上一次回执里的 `cursor`；缺省 0 = 从缓冲里最老一条读起 */
+  /** 游标——上一次回执里的 `cursor`；**缺省（没传任何取法参数）不再回放历史**，改回 `cursor-required`（05 案 B-1）；显式 0 = 要整个缓冲 */
   since?: number;
-  /** 本次最多取几条（1–1000，缺省 200） */
+  /** 本次最多取几条（1–1000，缺省 200）——超上限**钳到上限并回 truncated:true**（05 案 B-4/E13），不再报坏参 */
   limit?: number;
   /** 只看这个口（缺省 = 所有口）——⚠️ 游标按全局面上的位置前进，不受过滤影响 */
   portName?: string;
+  /** 读最近 N 条（与 since / afterMark 互斥，05 案 B-2）——不受 limit 上限约束，仍受缓冲容量约束 */
+  tail?: number;
+  /** 从命名游标之后读（与 since / tail 互斥，05 案 C-2）——mark 不存在 ⇒ ENOMARK */
+  afterMark?: string;
+  /** 行前缀过滤（服务端；游标照常前进，回执带 scanned/matched，05 案 B-3） */
+  prefix?: string;
+  /** 行正则过滤（服务端；同上） */
+  grep?: string;
+  /** 阻塞等一行命中（服务端，05 案 C-3）——**timeoutMs 必填**（⛔ 不设无限等）；可叠加 since/afterMark 定起点 */
+  untilRegex?: string;
+  /** untilRegex / query 的等待上限（毫秒）——须小于 CLI/命令层超时，否则命令层先超时看不到 timedOut */
+  timeoutMs?: number;
 }
 
 /**
- * 归一 `readSince` 入参——两形等价：逐位 `(since, limit, portName)` 与单具名对象 `{since,limit,portName}`。
+ * 归一 `readSince` 入参——两形等价：逐位 `(since, limit, portName)` 与单具名对象 `{…}`。
  *
  * 照 `AI#52` 窄口：壳在**声明了 ≥2 个 params** 时按声明序展开具名对象，但「只传一个键」这类形状
  * 仍可能整包落进 `args[0]` ⇒ 这里自己认一次，两形行为一致（照壳侧 `readCommands.pickStringArg` 同款）。
+ * ⚠️ 新取法（tail / afterMark / prefix / grep / untilRegex）只在**具名对象形**里有——逐位形只保留
+ * 旧三参（05 案 B① 的加宽不破坏旧调用方）。
  */
 function normalizeReadArgs(since?: unknown, limit?: unknown, portName?: unknown): ReadSinceArgs {
   if (since !== null && typeof since === "object" && !Array.isArray(since)) {
     const o = since as Record<string, unknown>;
-    return { since: o.since as number, limit: o.limit as number, portName: o.portName as string | undefined };
+    return {
+      since: o.since as number, limit: o.limit as number, portName: o.portName as string | undefined,
+      tail: o.tail as number, afterMark: o.afterMark as string | undefined,
+      prefix: o.prefix as string | undefined, grep: o.grep as string | undefined,
+      untilRegex: o.untilRegex as string | undefined, timeoutMs: o.timeoutMs as number | undefined,
+    };
   }
   return { since: since as number, limit: limit as number, portName: portName as string | undefined };
 }
@@ -203,6 +258,149 @@ export function readSessionId(args: unknown[]): unknown {
     return (first as Record<string, unknown>).sessionId;
   }
   return first;
+}
+
+/* ══ 05 案（门外 AI 契约补齐）共用基建 ══
+   A 组状态可信 / B① 缓冲查询 / C 等待原语 / E 复位——回执形状照 02-方案与契约 §〇：
+   成功 `{ok:true,…}`；noop `{ok:true,noop:true,reason}`（沿用 badArg 三件套）；失败 `{ok:false,code,error,hint?}`。
+   `reason`（noop，"我没动，因为没必要"）与 `code`（失败，"我做不到"）分工不同——⛔ 别混用。 */
+
+/** 05 案统一失败回执——`code` 照 02 §五错误码表（ENOSESSION/ENOPORT/EDEVICE/EALREADYOPEN/ENOMARK/EBUSY/ESENDFAIL/EBADARGS） */
+export interface CodeFail {
+  ok: false;
+  code: string;
+  error: string;
+  hint?: string;
+}
+export function failCode(code: string, error: string, hint?: string): CodeFail {
+  return hint !== undefined ? { ok: false, code, error, hint } : { ok: false, code, error };
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/* ── 05 案 C-1：命名游标（marks）——插件内存，reload 即失效（与 receiveLog 同一条「不落盘」纪律） ── */
+export interface MarkEntry {
+  /** 打点时的全局游标（_receiveLog.seq 水位） */
+  cursor: number;
+  /** 打点时点名（或缺省解析到）的会话——纯上下文回执用，游标本身是全局面上的位置 */
+  sessionId: string | null;
+  ts: number;
+}
+/** `_marks` 只在本文件声明（模块级 mutable 单一属主纪律）；测试可 poke/clear。 */
+export const _marks = new Map<string, MarkEntry>();
+
+/** 05 案 C-4：在等应答的口——同口并发 query ⇒ EBUSY（⛔ 不排队：两条指令的时序会错乱）。 */
+export const _queryBusy = new Set<string>();
+
+/**
+ * 设备在场清单（05 案 A 组的 `devicePresent` 判据）——插件自己枚举硬件面（`serial.listPorts`，
+ * 与界面「端口」下拉同一条腿）。拉不到（无 serial 面 / 读失败）⇒ `null`：**读不到的值如实 null，
+ * ⛔ 不猜**（⛔ 不拿本地 `_openPorts` 顶替硬件面——那是「软件以为」，不是「设备在不在」）。
+ */
+async function presentPortNames(): Promise<Set<string> | null> {
+  const s = window.linkdesk?.serial;
+  if (!s?.listPorts) return null;
+  try {
+    const ports = (await s.listPorts()) ?? [];
+    return new Set(ports.map((p) => p.name));
+  } catch { return null; }
+}
+
+/**
+ * 05 案 A1/A6：某口绑的会话此刻的**视图暂停态**——没挂视图 ⇒ `null`（⛔ 不报 false 假装问过，
+ * 与 listSessions 的 paused 同一口径）。视图暂停只冻结**显示**，AI 读数链（receiveLog）不受影响
+ * ——T0 已核实（receiveLog.ts 写入咽喉无条件），故这里只报可见性，不报「丢失」。
+ */
+function pausedForPort(portName: string | null): boolean | null {
+  if (!portName) return null;
+  for (const s of getSessions()) {
+    if (s.port !== portName) continue;
+    const cmd = _cmdMap.get(s.id);
+    if (cmd) return cmd.paused;
+  }
+  return null;
+}
+
+/** 05 案 A-1：读取面随行的 state 块。portName 定不下来（没给且推不出唯一口）⇒ `null`，⛔ 不猜。 */
+export interface PortReadState {
+  paused: boolean | null;
+  portOpen: boolean | null;
+  devicePresent: boolean | null;
+}
+async function buildPortState(portName: string | null): Promise<PortReadState | null> {
+  if (!portName) return null;
+  const present = await presentPortNames();
+  return {
+    paused: pausedForPort(portName),
+    portOpen: hasOpenPort(portName),
+    devicePresent: present ? present.has(portName) : null,
+  };
+}
+
+/**
+ * `readSince` 没给 portName 时推「唯一口」——恰有一条绑口会话时用它（唯一 ⇒ 不是猜），
+ * 多口/无口 ⇒ null（调用方自己点名 portName）。
+ */
+function resolveDefaultPort(): string | null {
+  const bound = new Set(getSessions().map((s) => s.port).filter((p): p is string => Boolean(p)));
+  return bound.size === 1 ? [...bound][0] : null;
+}
+
+/** 05 案 C-3：服务端阻塞等一行——命中即回；**超时是正常结局**（`{ok:true, matched:false, timedOut:true}`）；
+ *  等待中设备被拔 ⇒ 立即 EDEVICE（03 E19，⛔ 不傻等到超时）。 */
+async function waitUntilLine(o: { re: RegExp; startSeq: number; portName?: string; timeoutMs: number }): Promise<unknown> {
+  const t0 = Date.now();
+  let cursor = o.startSeq;
+  let tick = 0;
+  for (;;) {
+    const page = queryReceiveLog({ since: cursor, limit: 1, portName: o.portName, grep: o.re });
+    if (page.matched > 0) {
+      const hit = page.items[0];
+      return { ok: true, matched: true, line: hit.text, seq: hit.seq, portName: hit.portName, cursor: hit.seq, tookMs: Date.now() - t0, scanned: page.scanned };
+    }
+    cursor = page.cursor;
+    const elapsed = Date.now() - t0;
+    if (elapsed >= o.timeoutMs) {
+      return { ok: true, matched: false, timedOut: true, cursor, tookMs: elapsed, scanned: page.scanned };
+    }
+    if (++tick % WAIT_DEVICE_CHECK_TICKS === 0 && o.portName) {
+      const present = await presentPortNames();
+      if (present !== null && !present.has(o.portName)) {
+        return { ok: false, code: "EDEVICE", error: `等待期间设备消失（${o.portName} 已不在串口清单里）`, tookMs: Date.now() - t0 };
+      }
+    }
+    await sleep(WAIT_POLL_MS);
+  }
+}
+
+/** 05 案 C-4 的等应答半步——子串匹配，沿途收下本口收到的所有行（超时也带回，03 E17） */
+async function waitExpect(o: { port: string; startSeq: number; expect: string; timeoutMs: number }): Promise<unknown> {
+  const t0 = Date.now();
+  let cursor = o.startSeq;
+  const lines: ReceiveLogItem[] = [];
+  let tick = 0;
+  for (;;) {
+    const page = queryReceiveLog({ since: cursor, portName: o.port, limit: RECEIVE_READ_LIMIT_MAX });
+    cursor = page.cursor;
+    if (page.items.length > 0) {
+      lines.push(...page.items);
+      const hit = page.items.find((it) => it.text.includes(o.expect));
+      if (hit) {
+        return { ok: true, matched: true, line: hit.text, lines, elapsedMs: Date.now() - t0, cursor: hit.seq };
+      }
+    }
+    const elapsed = Date.now() - t0;
+    if (elapsed >= o.timeoutMs) {
+      return { ok: true, matched: false, timedOut: true, lines, elapsedMs: elapsed, cursor };
+    }
+    if (++tick % WAIT_DEVICE_CHECK_TICKS === 0) {
+      const present = await presentPortNames();
+      if (present !== null && !present.has(o.port)) {
+        return { ok: false, code: "EDEVICE", error: `等待应答期间设备消失（${o.port}）`, elapsedMs: Date.now() - t0 };
+      }
+    }
+    await sleep(WAIT_POLL_MS);
+  }
 }
 
 /* ── M2 `AI#67`：会话态开关的**定义表**（handler 只写一遍） ──
@@ -384,7 +582,18 @@ export function registerSerialCommands(): number {
       const portName = next.port;
       const opts = sessionPortOptions(next);
       if (hasOpenPort(portName)) {
-        // 已开：不动（本命令是「打开」不是「翻转」——关有 closePort）——如实回读，不假装刚开
+        // 05 案 A-5：先辨「真开着」还是「僵尸句柄」——判据 devicePresent（插件自己枚举硬件面）。
+        // 02 工程原话的「openPort 报『已被打开』绕 4~5 个来回」就是这一格在撒谎。
+        const present = await presentPortNames();
+        if (present !== null && !present.has(portName)) {
+          // 表里开着、设备不在 ⇒ 僵尸句柄：清掉（灯灭＋权威态注销），如实报 EDEVICE——⛔ 不再回 alreadyOpen 撒谎
+          await closePortFromModule(portName);
+          return failCode("EDEVICE",
+            `设备不在（${portName} 已从串口清单消失）而本插件还占着句柄——已把僵尸句柄清掉`,
+            "设备插回后 serial-monitor.reopen 一步恢复；端口号可能变，先 serial-monitor.listPorts 核对");
+        }
+        // 设备在场（或硬件面读不到，不猜）：真开着——不动（本命令是「打开」不是「翻转」，关有 closePort），
+        // 如实回读不假装刚开。若怀疑句柄已死而设备还在（拔插的另一种残留），用 serial-monitor.reopen 显式重开。
         return {
           opened: false, alreadyOpen: true, sessionId: next.id, portName, previousPortName,
           baudRate: opts.baudRate,
@@ -549,11 +758,14 @@ export function registerSerialCommands(): number {
     { title: i18n.t("编辑"), category: cat, when: whenActive },
   );
 
-  /* ── 接收面读数·拉取（M2 AI#64——门③ 读得到串口回声）──
+  /* ── 接收面读数·拉取（M2 AI#64——门③ 读得到串口回声；05 案 B① 加宽取法，仍只此一个读口）──
      回执三态（与壳 AI#55/AI#60、插件侧 AI#56 同口径，⛔ 不是「ok 就是干成了」）：
        有新数据 `{ok:true, items, cursor, count, lost}` ／ 没有新的 `{ok:true, noop:true, reason:"no-new-data"}`
-       ／ 调用本身不成立 `{ok:false, noop:true, reason:"bad-since"|"bad-limit"|"bad-port"|"cursor-ahead"|"no-serial-face"}`
-     `lost` = 已滚出缓冲、你再也读不到的条数（> 0 才说明落后了）——⛔ 别把它做成静默。 */
+       ／ 调用本身不成立 `{ok:false, noop:true, reason:"bad-since"|…|no-serial-face}` 或 `{ok:false, code:"E…"}`（05 案失败形）
+     取法三选一（互斥，05 案 B-1）：`since`（游标）/ `tail`（最近 N 条）/ `afterMark`（命名游标）；
+     `prefix` / `grep` 是正交过滤器（游标照常前进，回 scanned/matched）。
+     **缺省（连 since:0 都没显式给）⇒ `cursor-required`**——⛔ 不再回放 200 行历史（01 工程把旧日志当新现象的根）。
+     回执随行 `state:{paused, portOpen, devicePresent}`（05 案 A-1/A6；口定不下来 ⇒ null）。 */
   reg(
     "serial-monitor.readSince",
     async (...raw: unknown[]) => {
@@ -564,18 +776,63 @@ export function registerSerialCommands(): number {
           error: "串口能力不可用（window.linkdesk.serial 缺失）——接收日志没挂上，读不到任何数据",
         };
       }
-      const since = a.since ?? 0;
-      if (typeof since !== "number" || !Number.isInteger(since) || since < 0) {
-        return badArg("bad-since", `since 必须是非负整数（收到 ${JSON.stringify(a.since)}）——缺省 0 = 从缓冲里最老一条读起`);
+      // 05 案 B-1：三种取法互斥；tail 与 untilRegex 也不可同给（一个读尾一个等新行，语义不相容）
+      const modeCount = [a.since !== undefined, a.tail !== undefined, a.afterMark !== undefined].filter(Boolean).length;
+      if (modeCount > 1 || (a.tail !== undefined && a.untilRegex !== undefined)) {
+        return { ...badArg("mode-conflict", `since / tail / afterMark 三种取法互斥（tail 也不可与 untilRegex 同给）——一次只给一个（收到 ${JSON.stringify({ since: a.since, tail: a.tail, afterMark: a.afterMark })}）`), code: "EBADARGS" };
       }
-      const limit = a.limit ?? RECEIVE_READ_LIMIT_DEFAULT;
-      if (typeof limit !== "number" || !Number.isInteger(limit) || limit < 1 || limit > RECEIVE_READ_LIMIT_MAX) {
-        return badArg("bad-limit", `limit 必须是 1–${RECEIVE_READ_LIMIT_MAX} 的整数（收到 ${JSON.stringify(a.limit)}）`);
+      // 05 案 C-2：命名游标先解析（它是 since 的来源之一）
+      let markSeq: number | undefined;
+      if (a.afterMark !== undefined) {
+        if (typeof a.afterMark !== "string" || !a.afterMark.trim()) {
+          return badArg("bad-aftermark", `afterMark 必须是非空字符串（收到 ${JSON.stringify(a.afterMark)}）——先 serial-monitor.mark {"name":"…"}`);
+        }
+        const mark = _marks.get(a.afterMark.trim());
+        if (!mark) {
+          return failCode("ENOMARK",
+            `命名游标 "${a.afterMark.trim()}" 不存在——marks 存插件内存（池页面 reload 即失效）`,
+            "先 serial-monitor.mark {name} 打点");
+        }
+        markSeq = mark.cursor;
       }
+      const since = a.since ?? markSeq;
+      // 05 案 B-1：缺省（三种取法都没给）⇒ 不再有副作用——如实说缺游标，把当前水位给出去
+      if (since === undefined && a.tail === undefined && a.untilRegex === undefined) {
+        const state0 = await buildPortState(a.portName?.trim() || resolveDefaultPort());
+        return {
+          ok: true, noop: true, reason: "cursor-required", cursor: _receiveLog.seq,
+          hint: "传 since（上次回执的 cursor）/ tail（最近 N 条）/ afterMark（命名游标）之一；要整个缓冲显式传 since:0",
+          ...(state0 ? { state: state0 } : {}),
+        };
+      }
+      if (since !== undefined && (typeof since !== "number" || !Number.isInteger(since) || since < 0)) {
+        return badArg("bad-since", `since 必须是非负整数（收到 ${JSON.stringify(a.since)}）——要整个缓冲显式传 since:0`);
+      }
+      if (a.tail !== undefined && (typeof a.tail !== "number" || !Number.isInteger(a.tail) || a.tail < 1)) {
+        return badArg("bad-tail", `tail 必须是 ≥1 的整数（收到 ${JSON.stringify(a.tail)}）`);
+      }
+      // 05 案 B-4/E13：limit 超上限 ⇒ 钳到上限并如实回 truncated（⛔ 不静默截）；坏类型 / <1 照旧拒
+      let truncated = false;
+      const rawLimit = a.limit ?? RECEIVE_READ_LIMIT_DEFAULT;
+      if (a.limit !== undefined && (typeof a.limit !== "number" || !Number.isInteger(a.limit) || a.limit < 1)) {
+        return badArg("bad-limit", `limit 必须是 ≥1 的整数（收到 ${JSON.stringify(a.limit)}）`);
+      }
+      const limit = rawLimit > RECEIVE_READ_LIMIT_MAX ? (truncated = true, RECEIVE_READ_LIMIT_MAX) : rawLimit;
       if (a.portName !== undefined && a.portName !== null && (typeof a.portName !== "string" || !a.portName.trim())) {
         return badArg("bad-port", "portName 必须是非空字符串（缺省 = 所有口）");
       }
-      if (since > _receiveLog.seq) {
+      // 05 案 B-3：prefix / grep——正交过滤器（服务端做，游标照常前进）
+      if (a.prefix !== undefined && (typeof a.prefix !== "string" || !a.prefix)) {
+        return badArg("bad-prefix", `prefix 必须是非空字符串（收到 ${JSON.stringify(a.prefix)}）——不要过滤就别传`);
+      }
+      let grepRe: RegExp | undefined;
+      if (a.grep !== undefined) {
+        if (typeof a.grep !== "string" || !a.grep) return badArg("bad-grep", "grep 必须是非空正则字符串——不要过滤就别传");
+        try { grepRe = new RegExp(a.grep); } catch (e) {
+          return badArg("bad-grep", `grep 不是合法正则（${e instanceof Error ? e.message : String(e)}）`);
+        }
+      }
+      if (since !== undefined && since > _receiveLog.seq) {
         // 池页面一 reload，序号从头再来 ⇒ 上一轮的游标会「超过水位」；此时若照常回空，AI 会以为
         // 「没有新数据」而永远读不到东西（seq 要从 1 长过旧游标才恢复）——如实报，并给出可用的游标。
         return {
@@ -583,11 +840,39 @@ export function registerSerialCommands(): number {
           error: `游标 ${since} 超过当前水位 ${_receiveLog.seq}——接收日志已重启（池页面重载，序号从头再来）或这条游标不是本插件给的；用回执里的 cursor 重新拉`,
         };
       }
-      const page = readReceiveLog(since, limit, a.portName?.trim() || undefined);
-      if (page.items.length === 0) {
-        return { ok: true, noop: true, reason: "no-new-data", items: [], cursor: page.cursor, lost: page.lost };
+      // 05 案 C-3：untilRegex——服务端阻塞等一行（timeoutMs 必填，⛔ 不设无限等）
+      if (a.untilRegex !== undefined) {
+        if (typeof a.untilRegex !== "string" || !a.untilRegex) return badArg("bad-until", "untilRegex 必须是非空正则字符串");
+        if (a.timeoutMs === undefined || typeof a.timeoutMs !== "number" || !Number.isInteger(a.timeoutMs) || a.timeoutMs < 1 || a.timeoutMs > WAIT_TIMEOUT_MS_MAX) {
+          return badArg("bad-timeout", `untilRegex 必须配 timeoutMs（1–${WAIT_TIMEOUT_MS_MAX} 毫秒的整数，⛔ 不设无限等）——收到 ${JSON.stringify(a.timeoutMs)}；⚠️ timeoutMs 要小于 CLI/命令层超时，否则命令层先超时看不到 timedOut`);
+        }
+        let re: RegExp;
+        try { re = new RegExp(a.untilRegex); } catch (e) {
+          return badArg("bad-until", `untilRegex 不是合法正则（${e instanceof Error ? e.message : String(e)}）`);
+        }
+        return await waitUntilLine({ re, startSeq: since ?? _receiveLog.seq, portName: a.portName?.trim() || undefined, timeoutMs: a.timeoutMs });
       }
-      return { ok: true, items: page.items, cursor: page.cursor, count: page.items.length, lost: page.lost };
+      const portName = a.portName?.trim() || undefined;
+      const filtered = a.prefix !== undefined || grepRe !== undefined;
+      const page = queryReceiveLog({ since, tail: a.tail, limit, portName, prefix: a.prefix || undefined, grep: grepRe });
+      // 05 案 A-1/A6：state 随行——点名口最准；没点名且恰有一条绑口会话也能定；再多口 ⇒ null（⛔ 不猜）
+      const state = await buildPortState(portName ?? resolveDefaultPort());
+      if (page.items.length === 0 && a.tail === undefined) {
+        return {
+          ok: true, noop: true, reason: "no-new-data", items: [], cursor: page.cursor, lost: page.lost,
+          ...(filtered ? { scanned: page.scanned, matched: 0 } : {}),
+          ...(truncated ? { truncated: true } : {}),
+          ...(state ? { state } : {}),
+        };
+      }
+      return {
+        ok: true, items: page.items, cursor: page.cursor, count: page.items.length, lost: page.lost,
+        // 05 案 B-1/B-2：显式 since:0（要整个缓冲）与 tail 都是「历史」取法——如实标（旧当新是 01 工程的误判根）
+        ...(since === 0 || a.tail !== undefined ? { history: true } : {}),
+        ...(filtered ? { scanned: page.scanned, matched: page.matched } : {}),
+        ...(truncated ? { truncated: true } : {}),
+        ...(state ? { state } : {}),
+      };
     },
     { title: i18n.t("读取接收数据"), category: cat, when: "false" },
   );
@@ -613,13 +898,35 @@ export function registerSerialCommands(): number {
       } catch { /* 读口态失败不阻断裂读数——下面按本地集合兜底 */ }
       if (openPorts === null) openPorts = [...getOpenPorts()];
 
+      // 05 案 A-1/A-2：设备在场（插件自己枚举硬件面；读不到 ⇒ null 不猜）＋ 每口时点
+      const present = await presentPortNames();
+      const now = Date.now();
       const counts = new Map<string, number>();
       for (const item of _receiveLog.items) counts.set(item.portName, (counts.get(item.portName) ?? 0) + 1);
-      const ports = new Map<string, { portName: string; count: number; open: boolean }>();
-      for (const [portName, count] of counts) ports.set(portName, { portName, count, open: openPorts.includes(portName) });
+      const ports = new Map<string, {
+        portName: string; count: number; open: boolean;
+        devicePresent: boolean | null; lastDataAt: number | null; idleMs: number | null;
+        state: { paused: boolean | null; portOpen: boolean; devicePresent: boolean | null };
+      }>();
+      const entryFor = (portName: string, count: number, open: boolean) => {
+        const lastDataAt = _receiveLog.lastDataAt.get(portName) ?? null;
+        const devicePresent = present ? present.has(portName) : null;
+        return {
+          portName, count, open, devicePresent, lastDataAt,
+          idleMs: lastDataAt !== null ? now - lastDataAt : null,
+          // 05 案 A-1：state 随行——paused 没挂视图 ⇒ null（⛔ 不报 false 假装问过）
+          state: { paused: pausedForPort(portName), portOpen: open, devicePresent },
+        };
+      };
+      for (const [portName, count] of counts) ports.set(portName, entryFor(portName, count, openPorts.includes(portName)));
       // 开着但一条都没收到（或他口）的口也列出来——AI 才能分辨「口没开」与「开了但设备没说话」
       for (const portName of openPorts) {
-        if (!ports.has(portName)) ports.set(portName, { portName, count: 0, open: true });
+        if (!ports.has(portName)) ports.set(portName, entryFor(portName, 0, true));
+      }
+      // 05 案 A-2 顶层时点：全局面最近一次收到数据的时刻（多口取最近）
+      let lastDataAt: number | null = null;
+      for (const v of _receiveLog.lastDataAt.values()) {
+        if (lastDataAt === null || v > lastDataAt) lastDataAt = v;
       }
       return {
         ok: true,
@@ -627,10 +934,161 @@ export function registerSerialCommands(): number {
         first: receiveLogFirst(),
         count: _receiveLog.items.length,
         capacity: RECEIVE_LOG_MAX,
+        lastDataAt,
+        idleMs: lastDataAt !== null ? now - lastDataAt : null,
         ports: [...ports.values()],
       };
     },
     { title: i18n.t("接收面水位"), category: cat, when: "false" },
+  );
+
+  /* ── 05 案 A-4：reopen——拔插后一步恢复（closePort → 等一小段 → openPort，同一会话同参数）──
+     02 工程原话「拔插一次 USB 后……花了 4~5 个来回」的正面解药：设备不在就如实 EDEVICE，
+     ⛔ 不做自动重连轮询（02 §六①——只在调用时检测）。 */
+  reg(
+    "serial-monitor.reopen",
+    async (args?: PortTargetArgs) => {
+      const a = args ?? {};
+      const session = resolveSession(a.sessionId);
+      if (!session && a.sessionId) throw sessionNotFoundError(a.sessionId);
+      const portName = a.portName ?? session?.port ?? "";
+      if (!portName) {
+        return failCode("ENOPORT", "未指定端口，会话也没绑端口——给 portName 或先 openPort",
+          "先 serial-monitor.listPorts 挑口，再 serial-monitor.listSessions 拿 sessionId");
+      }
+      // 「同一会话同参数」——参数（波特率/帧格式/编码）从属主会话读起；点名 portName 而无会话绑它 ⇒ 没有可恢复的参数
+      const owner = session ?? getSessions().find((s) => s.port === portName) ?? null;
+      if (!owner) {
+        return failCode("ENOSESSION", `端口 ${portName} 没有绑在任何会话上——reopen 按「同一会话同参数」恢复，参数无从读起`,
+          "先 serial-monitor.openPort 建会话（它会把参数存进会话）");
+      }
+      const wasOpen = hasOpenPort(portName);
+      // 设备不在就别白折腾——如实 EDEVICE（02 A-4）
+      const present = await presentPortNames();
+      if (present !== null && !present.has(portName)) {
+        return failCode("EDEVICE", `设备不在（${portName} 不在串口清单里）——插回后再 reopen`,
+          "端口号可能变，先 serial-monitor.listPorts 核对 COM 号");
+      }
+      const t0 = Date.now();
+      if (wasOpen) await closePortFromModule(portName);
+      await sleep(REOPEN_GAP_MS);
+      const okOpen = await openPortFromModule({ portName, ...sessionPortOptions(owner) });
+      if (!okOpen) {
+        throw new Error(`重开 ${portName} 失败——串口能力不可用或打开被拒（可能被其他程序占用，EALREADYOPEN 的口子）`);
+      }
+      return { ok: true, sessionId: owner.id, portName, recovered: true, reopened: wasOpen, tookMs: Date.now() - t0 };
+    },
+    { title: i18n.t("重开端口"), category: cat, when: "false" },
+  );
+
+  /* ── 05 案 C-1：mark——命名游标（插件内存，reload 即失效；同名覆盖回 previous）── */
+  reg(
+    "serial-monitor.mark",
+    async (args?: MarkArgs) => {
+      const a = args ?? {};
+      if (typeof a.name !== "string" || !a.name.trim()) {
+        return badArg("bad-name", `name 必须是非空字符串（收到 ${JSON.stringify(a.name)}）——给游标起个名，如 "boot-start"`);
+      }
+      const name = a.name.trim();
+      let sessionId: string | null = null;
+      if (a.sessionId !== undefined && a.sessionId !== null) {
+        const target = addressSession(a.sessionId);
+        if (!("session" in target)) return target;
+        sessionId = target.session.id;
+      }
+      const cursor = _receiveLog.seq;
+      const previous = _marks.get(name)?.cursor ?? null;
+      _marks.set(name, { cursor, sessionId, ts: Date.now() });
+      return { ok: true, name, cursor, sessionId, previous };
+    },
+    { title: i18n.t("标记游标"), category: cat, when: "false" },
+  );
+
+  /* ── 05 案 C-4：query——发 ＋ 等应答，一次调用（02 工程「send → 睡 → read 有竞态」的正面解药）──
+     内部：记游标 → sendText → 服务端阻塞等 expect（子串匹配）→ 回命中行与沿途收到的行。
+     同口并发 ⇒ EBUSY（⛔ 不排队：两条指令的时序会错乱）。 */
+  reg(
+    "serial-monitor.query",
+    async (args?: QueryArgs) => {
+      const a = args ?? {};
+      if (typeof a.send !== "string" || !a.send) return badArg("bad-send", `send 必须是非空字符串（收到 ${JSON.stringify(a.send)}）——要发什么指令`);
+      if (typeof a.expect !== "string" || !a.expect) return badArg("bad-expect", `expect 必须是非空字符串（收到 ${JSON.stringify(a.expect)}）——等什么应答（子串匹配）`);
+      if (a.timeoutMs === undefined || typeof a.timeoutMs !== "number" || !Number.isInteger(a.timeoutMs) || a.timeoutMs < 1 || a.timeoutMs > WAIT_TIMEOUT_MS_MAX) {
+        return badArg("bad-timeout", `timeoutMs 必填（1–${WAIT_TIMEOUT_MS_MAX} 毫秒的整数，⛔ 不设无限等）——收到 ${JSON.stringify(a.timeoutMs)}；⚠️ 要小于 CLI/命令层超时，否则命令层先超时看不到 timedOut`);
+      }
+      const session = resolveSession(a.sessionId);
+      if (!session && a.sessionId) throw sessionNotFoundError(a.sessionId);
+      const portName = a.portName ?? session?.port ?? "";
+      if (!portName) {
+        return failCode("ENOPORT", "未指定端口，会话也没绑端口——给 portName 或先 openPort",
+          "先 serial-monitor.listSessions 拿 sessionId");
+      }
+      if (_queryBusy.has(portName)) {
+        return failCode("EBUSY", `端口 ${portName} 上已有一个 query 在等应答——并发会错乱时序`, "等当前 query 返回再发下一条");
+      }
+      const s = window.linkdesk?.serial;
+      if (!s?.sendText) {
+        return failCode("ESENDFAIL", "串口能力不可用（window.linkdesk.serial 缺失）");
+      }
+      _queryBusy.add(portName);
+      const t0 = Date.now();
+      try {
+        const cursor0 = _receiveLog.seq;
+        const enc = session?.sendCoding ?? "utf-8";
+        try {
+          await s.sendText(a.send, enc, portName);
+        } catch (e) {
+          return failCode("ESENDFAIL", `发送失败（${e instanceof Error ? e.message : String(e)}）——口开着吗？看 serial-monitor.receiveStatus`);
+        }
+        return await waitExpect({ port: portName, startSeq: cursor0, expect: a.expect, timeoutMs: a.timeoutMs });
+      } finally {
+        _queryBusy.delete(portName);
+      }
+    },
+    { title: i18n.t("发送并等待应答"), category: cat, when: "false" },
+  );
+
+  /* ── 05 案 E-1：reset——DTR/RTS 电气复位（只调既有 setDtr/setRts，零新 IPC）──
+     序列：拉低 → 等 holdMs → 拉高；both = DTR 与 RTS 同相。
+     ⚠️ 这是电气复位：板子没接复位电路时不生效（不是错误，是硬件事实——meta 里写明）。 */
+  reg(
+    "serial-monitor.reset",
+    async (args?: ResetArgs) => {
+      const a = args ?? {};
+      if (a.method !== RESET_METHOD_DTR && a.method !== RESET_METHOD_RTS && a.method !== RESET_METHOD_BOTH) {
+        return badArg("bad-method", `method 必须是 ${RESET_METHOD_DTR} | ${RESET_METHOD_RTS} | ${RESET_METHOD_BOTH}（收到 ${JSON.stringify(a.method)}）`);
+      }
+      const holdMs = a.holdMs ?? RESET_HOLD_MS_DEFAULT;
+      if (typeof holdMs !== "number" || !Number.isInteger(holdMs) || holdMs < 1 || holdMs > RESET_HOLD_MS_MAX) {
+        return badArg("bad-hold", `holdMs 必须是 1–${RESET_HOLD_MS_MAX} 的整数（收到 ${JSON.stringify(a.holdMs)}）——缺省 ${RESET_HOLD_MS_DEFAULT}`);
+      }
+      const session = resolveSession(a.sessionId);
+      if (!session && a.sessionId) throw sessionNotFoundError(a.sessionId);
+      const portName = a.portName ?? session?.port ?? "";
+      if (!portName) {
+        return failCode("ENOPORT", "未指定端口，会话也没绑端口——给 portName 或先 openPort",
+          "先 serial-monitor.listSessions 拿 sessionId");
+      }
+      if (!hasOpenPort(portName)) {
+        return failCode("ENOPORT", `端口 ${portName} 没开——DTR/RTS 电平只对已打开的口有效`, "先 serial-monitor.openPort");
+      }
+      const s = window.linkdesk?.serial;
+      if (!s?.setDtr || !s?.setRts) {
+        return failCode("EDEVICE", "宿主没有 setDtr/setRts 能力（软件太旧）——升级宿主后再用");
+      }
+      const t0 = Date.now();
+      const low = a.method === RESET_METHOD_DTR ? s.setDtr(false, portName)
+        : a.method === RESET_METHOD_RTS ? s.setRts(false, portName)
+        : Promise.all([s.setDtr(false, portName), s.setRts(false, portName)]);
+      await low;
+      await sleep(holdMs);
+      const high = a.method === RESET_METHOD_DTR ? s.setDtr(true, portName)
+        : a.method === RESET_METHOD_RTS ? s.setRts(true, portName)
+        : Promise.all([s.setDtr(true, portName), s.setRts(true, portName)]);
+      await high;
+      return { ok: true, portName, method: a.method, holdMs, tookMs: Date.now() - t0 };
+    },
+    { title: i18n.t("复位板子"), category: cat, when: "false" },
   );
 
   /* ── 可用串口清单（M2 AI#67 配套读）──
@@ -677,6 +1135,8 @@ export function registerSerialCommands(): number {
     "serial-monitor.listSessions",
     async () => {
       const sessions = getSessions();
+      // 05 案 A-3：设备在场——stale = 「表里说开着，实际设备没了」（拔插 USB 后 open:true 撒谎的解药）
+      const present = await presentPortNames();
       return {
         ok: true,
         count: sessions.length,
@@ -685,11 +1145,16 @@ export function registerSerialCommands(): number {
           // 视图态读数的唯一来源：`_cmdMap`（每挂载一个串口视图写一格，键 = 会话 id）。
           // ⛔ 没挂载就报 null，⛔ 不报 false 假装问过——「标签页没开」与「暂停态是假的」不是一回事。
           const cmd = _cmdMap.get(s.id);
+          const open = hasOpenPort(s.port);
+          const devicePresent = s.port && present ? present.has(s.port) : (present === null ? null : false);
           return {
             sessionId: s.id,
             name: s.name,
             portName: s.port || null,
-            open: hasOpenPort(s.port),
+            open,
+            // 05 案 A-3：devicePresent 读不到（无硬件面）⇒ null 不猜；stale 只在「open 且确认不在」时为 true
+            devicePresent,
+            stale: open === true && devicePresent === false,
             viewMounted: Boolean(cmd),
             paused: cmd ? cmd.paused : null,
             baudRate: Number(s.baudRate || 115200),
@@ -722,6 +1187,7 @@ export function registerSerialCommands(): number {
     });
   }
 
-  // 17 = 九条动作/读数（AI#23/AI#64）＋ 两条寻址读（listPorts/listSessions）＋ 六条会话态开关
-  return 9 + 2 + SESSION_TOGGLES.length;
+  // 21 = 九条动作/读数（AI#23/AI#64/05 案加宽）＋ 两条寻址读（listPorts/listSessions）
+  //    ＋ 六条会话态开关 ＋ 05 案四条（reopen A-4 / mark C-1 / query C-4 / reset E-1）
+  return 9 + 2 + 4 + SESSION_TOGGLES.length;
 }
