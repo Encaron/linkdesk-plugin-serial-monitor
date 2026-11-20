@@ -1,25 +1,35 @@
 {
   "version": "1",
-  "updatedAt": "2026-11-16T22:07:28.991Z",
+  "updatedAt": "2026-11-20T11:42:52.412Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.37",
+      "version": "1.0.38",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "官方"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.37/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.38/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.37/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.38/resources/icon.svg",
       "marketIconSource": "url",
       "minAppVersion": "0.2.20",
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.37/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.37/serial-monitor.linkdesk-plugin",
-      "size": 165393,
-      "publishedAt": "2026-11-16T22:07:28.991Z",
+      "category": "hardware",
+      "categories": [
+        "serial"
+      ],
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.38/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.38/serial-monitor.linkdesk-plugin",
+      "size": 165340,
+      "publishedAt": "2026-11-20T11:42:52.412Z",
       "versions": [
+        {
+          "version": "1.0.38",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.38/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-11-20T11:42:52.412Z",
+          "changelog": "- **分类声明（R4-2.8/2.9）**：`plugin.json` 顶层补 `category: \"hardware\"` ＋ `categories: [\"serial\"]`——商店分类抽屉归位，随本次发版进入官方目录条目。"
+        },
         {
           "version": "1.0.37",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.37/serial-monitor.linkdesk-plugin",
@@ -47,8 +57,7 @@
         {
           "version": "1.0.33",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.33/serial-monitor.linkdesk-plugin",
-          "publishedAt": "2026-10-04T15:12:37.005Z",
-          "changelog": "- **配置项行名短名**（配置项短名案）：设置页「串口监视器」组的两个开关此前行名只能裸显英文配置键；现改为声明式短名——`statusBar.connection` → 「连接指示灯」、`confirmOnClose` → 「关闭确认」，英文界面走本仓 i18n 译名。第三方存量声明不受影响（无短名者照旧回退显配置键）。"
+          "publishedAt": "2026-10-04T15:12:37.005Z"
         },
         {
           "version": "1.0.32",
