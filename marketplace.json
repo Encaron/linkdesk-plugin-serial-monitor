@@ -12,6 +12,10 @@
       },
       "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.38/resources/icon-bar.svg",
       "iconSource": "url",
+      "cover": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/HEAD/resources/cover.svg",
+      "screenshots": [
+        "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/HEAD/resources/cover.svg"
+      ],
       "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.38/resources/icon.svg",
       "marketIconSource": "url",
       "minAppVersion": "0.2.20",
