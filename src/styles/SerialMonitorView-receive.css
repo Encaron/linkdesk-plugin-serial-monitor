@@ -107,7 +107,7 @@
 .serial-monitor-cm-container .cm-panels .cm-textfield input {
   background: var(--bg-input);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 4px 8px;
   color: var(--text-primary);
   font-size: var(--font-size-sm); /* E5.8 Phase 12 #176：CM6 搜索面板 12→sm */
@@ -120,7 +120,7 @@
 .serial-monitor-cm-container .cm-panels button {
   background: var(--bg-input);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   cursor: pointer;
 }

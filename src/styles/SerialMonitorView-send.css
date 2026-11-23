@@ -129,7 +129,7 @@
   overflow-y: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-pop); /* E5.8#128.8：0 4px 16px rgba(0,0,0,0.4) → 下拉权威 shadow-pop（SelectBox 同款） */
   z-index: var(--z-dropdown);
 }

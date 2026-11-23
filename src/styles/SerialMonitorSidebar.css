@@ -23,7 +23,7 @@
   padding: 6px 8px 6px 6px; /* 左侧留 2px 给色条 */
   border-left: 2px solid transparent;
   cursor: pointer;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   transition: background 100ms ease;
 }
 
