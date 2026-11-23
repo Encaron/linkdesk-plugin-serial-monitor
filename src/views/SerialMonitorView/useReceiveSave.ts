@@ -36,7 +36,9 @@ export function useReceiveSave(o: ReceiveSaveOptions) {
       const dir = env?.pluginDataDir;
       if (!dir) return;
       const name = sanitizeFileName(sessionName ?? "serial");
-      await window.linkdesk?.filesystem?.writeTextFile?.(`${dir}/receive-saves/${name}.txt`, text);
+      // 2026-11-24 语义归属（S1）：路径拼接走壳 `path.join`（唯一实现），⛔ 插件手拼 `/`
+      const path = window.linkdesk.path.join(dir, "receive-saves", `${name}.txt`);
+      await window.linkdesk.filesystem.writeTextFile(path, text);
     } catch (e) {
       console.error("[serial-monitor] 自动保存接收区失败:", e);
     }

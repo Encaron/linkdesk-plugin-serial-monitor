@@ -24,6 +24,27 @@ export function useReceiveExport(o: ReceiveExportOptions) {
     if (!view) return;
     const text = view.state.doc.toString();
     const filename = `serial-log-${Date.now()}.txt`;
+
+    // 2026-11-24（S2/D12）：优先宿主动作 `dialog.save`——只选落盘路径（起始目录/覆盖确认 = OS 原生），
+    // 写入走壳 filesystem。⛔ 不再由插件自造第二套保存路径（旧壳无该面时才回落浏览器下载）。
+    const save = window.linkdesk?.dialog?.save;
+    if (save) {
+      try {
+        const target = await save({
+          title: t("导出日志"),
+          filters: [{ name: "Text", extensions: ["txt"] }],
+          defaultName: filename,
+        });
+        if (!target) return; // 用户取消——不是失败，也不偷偷改走浏览器下载
+        await window.linkdesk.filesystem.writeTextFile(target, text);
+        appendLine(t("---- 日志已导出至 {{filename}} ----", { filename: target }), "system");
+        return;
+      } catch (e) {
+        // 壳保存面异常 → 记录后回落旧链（不静默吞掉失败原因）
+        console.error("[serial-monitor] 宿主保存对话框不可用，回落浏览器下载:", e);
+      }
+    }
+
     try {
       const handle = await saveFilePicker?.({
         suggestedName: filename,
