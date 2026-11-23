@@ -70,9 +70,9 @@
   <circle cx="64" cy="126" r="5.5" fill="#2dd4bf"/>
   <text x="84" y="131" font-family="Consolas,'JetBrains Mono',monospace" font-size="15" fill="#e7edfb">COM3 · 115200 · 8N1</text>
   <g font-family="Consolas,'JetBrains Mono',monospace" font-size="12.5">
-    <text x="470" y="131" text-anchor="end" fill="#55638a">RX</text>
+    <text x="470" y="131" text-anchor="end" fill="#8FA0C4">RX</text>
     <text x="480" y="131" text-anchor="start" fill="#6ee7cf">1.24 KB</text>
-    <text x="556" y="131" text-anchor="end" fill="#55638a">TX</text>
+    <text x="556" y="131" text-anchor="end" fill="#8FA0C4">TX</text>
     <text x="566" y="131" text-anchor="start" fill="#b9a1f2">47 B</text>
   </g>
   <line x1="36" y1="144" x2="604" y2="144" stroke="#ffffff" stroke-opacity="0.06"/>
@@ -80,54 +80,54 @@
   <!-- 接收区（CM6）：时间戳 + 方向 + 数据，方向同列对齐 -->
   <g font-family="Consolas,'JetBrains Mono',monospace" font-size="13.5">
     <!-- 行 0 → hex -->
-    <text x="58" y="178" fill="#4d5b7d">00:00.021</text>
+    <text x="58" y="178" fill="#93A5C9">00:00.021</text>
     <text x="158" y="178" fill="#5eead4">→</text>
     <text x="176" y="178"><tspan fill="#7fd0f0">55 AA 01 41 0D 0A</tspan></text>
     <!-- 行 1 → ascii -->
-    <text x="58" y="200" fill="#4d5b7d">00:00.023</text>
+    <text x="58" y="200" fill="#93A5C9">00:00.023</text>
     <text x="158" y="200" fill="#5eead4">→</text>
     <text x="176" y="200" fill="#e7edfb">temp=23.4  hum=61.2  bat=92%</text>
     <!-- 行 2 → OK -->
-    <text x="58" y="222" fill="#4d5b7d">00:00.024</text>
+    <text x="58" y="222" fill="#93A5C9">00:00.024</text>
     <text x="158" y="222" fill="#5eead4">→</text>
     <text x="176" y="222" fill="#e7edfb">OK</text>
     <!-- 行 3 ← sent -->
-    <text x="58" y="244" fill="#4d5b7d">00:00.410</text>
+    <text x="58" y="244" fill="#93A5C9">00:00.410</text>
     <text x="158" y="244" fill="#c4b5fd">←</text>
     <text x="176" y="244" fill="#d9ccfb">AT+RST</text>
     <!-- 行 4 → OK -->
-    <text x="58" y="266" fill="#4d5b7d">00:00.412</text>
+    <text x="58" y="266" fill="#93A5C9">00:00.412</text>
     <text x="158" y="266" fill="#5eead4">→</text>
     <text x="176" y="266" fill="#e7edfb">OK</text>
     <!-- 行 5 → system -->
-    <text x="58" y="288" fill="#4d5b7d">00:00.415</text>
+    <text x="58" y="288" fill="#93A5C9">00:00.415</text>
     <text x="158" y="288" fill="#5eead4">→</text>
     <text x="176" y="288"><tspan fill="#f6c37f">[BOOT]</tspan><tspan fill="#e7edfb"> ready · ver 2.3.1</tspan></text>
     <!-- 行 6 -->
-    <text x="58" y="310" fill="#4d5b7d">00:00.416</text>
+    <text x="58" y="310" fill="#93A5C9">00:00.416</text>
     <text x="158" y="310" fill="#5eead4">→</text>
     <text x="176" y="310" fill="#e7edfb">status=idle</text>
     <!-- 行 7 → hex -->
-    <text x="58" y="332" fill="#4d5b7d">00:01.008</text>
+    <text x="58" y="332" fill="#93A5C9">00:01.008</text>
     <text x="158" y="332" fill="#5eead4">→</text>
     <text x="176" y="332"><tspan fill="#7fd0f0">00 0A 5F 7C FF</tspan></text>
     <!-- 行 8 -->
-    <text x="58" y="354" fill="#4d5b7d">00:01.009</text>
+    <text x="58" y="354" fill="#93A5C9">00:01.009</text>
     <text x="158" y="354" fill="#5eead4">→</text>
     <text x="176" y="354"><tspan fill="#f6c37f">+CFG</tspan><tspan fill="#e7edfb"> baud=115200 n 8 1</tspan></text>
     <!-- 行 9 ← -->
-    <text x="58" y="376" fill="#4d5b7d">00:02.103</text>
+    <text x="58" y="376" fill="#93A5C9">00:02.103</text>
     <text x="158" y="376" fill="#c4b5fd">←</text>
     <text x="176" y="376" fill="#d9ccfb">AT+STAT?</text>
     <!-- 行 10 -->
-    <text x="58" y="398" fill="#4d5b7d">00:02.104</text>
+    <text x="58" y="398" fill="#93A5C9">00:02.104</text>
     <text x="158" y="398" fill="#5eead4">→</text>
     <text x="176" y="398" fill="#e7edfb">OK</text>
     <!-- 行 11（高亮为当前接收行） -->
   </g>
   <rect x="36" y="402" width="568" height="22" fill="url(#sm_row)"/>
   <g font-family="Consolas,'JetBrains Mono',monospace" font-size="13.5">
-    <text x="58" y="420" fill="#6b7aa2">00:02.106</text>
+    <text x="58" y="420" fill="#93A5C9">00:02.106</text>
     <text x="158" y="420" fill="#5eead4">→</text>
     <text x="176" y="420" fill="#e7edfb">uptime 09:12:33 · rx 1.24 KB</text>
   </g>
@@ -144,5 +144,5 @@
   <rect x="402" y="494" width="118" height="34" rx="17" fill="url(#sm_sendbtn)"/>
   <text x="461" y="516.5" text-anchor="middle" font-family="Consolas,'JetBrains Mono',monospace" font-size="13" font-weight="700" fill="#04120f">SEND</text>
   <circle cx="548" cy="511" r="3.4" fill="#2dd4bf"/>
-  <text x="556" y="515" font-family="Consolas,'JetBrains Mono',monospace" font-size="11.5" fill="#4d5b7d">on</text>
+  <text x="556" y="515" font-family="Consolas,'JetBrains Mono',monospace" font-size="11.5" fill="#93A5C9">on</text>
 </svg>
