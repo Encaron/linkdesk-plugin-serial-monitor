@@ -1,33 +1,35 @@
 {
   "version": "1",
-  "updatedAt": "2026-11-20T11:42:52.412Z",
+  "updatedAt": "2026-11-23T13:51:46.960Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.38",
+      "version": "1.0.39",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
-        "name": "官方"
+        "name": "Encaron"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.38/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.39/resources/icon-bar.svg",
       "iconSource": "url",
-      "cover": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/HEAD/resources/cover.svg",
-      "screenshots": [
-        "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/HEAD/resources/cover.svg"
-      ],
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.38/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.39/resources/icon.svg",
       "marketIconSource": "url",
       "minAppVersion": "0.2.20",
       "category": "hardware",
       "categories": [
         "serial"
       ],
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.38/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.38/serial-monitor.linkdesk-plugin",
-      "size": 165340,
-      "publishedAt": "2026-11-20T11:42:52.412Z",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.39/README.md",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.39/serial-monitor.linkdesk-plugin",
+      "size": 164950,
+      "publishedAt": "2026-11-23T13:51:46.960Z",
       "versions": [
+        {
+          "version": "1.0.39",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.39/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-11-23T13:51:46.960Z",
+          "changelog": "- 圆角改吃宿主 `--radius-*`（零视觉）"
+        },
         {
           "version": "1.0.38",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.38/serial-monitor.linkdesk-plugin",
@@ -55,8 +57,7 @@
         {
           "version": "1.0.34",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.34/serial-monitor.linkdesk-plugin",
-          "publishedAt": "2026-11-06T18:05:48.474Z",
-          "changelog": "- **修复快捷发送右键菜单空白**：右键快捷发送按钮弹出的菜单是空的、没法删除——壳按命令声明的显示条件过滤菜单项时，「编辑／删除」带着「串口标签页激活」条件，而右键菜单没把这个条件带过去，整单被滤空。现在右键菜单自带该条件，三条菜单（回填到发送区／编辑／删除）稳定出现。\n- **发送历史下拉补失焦关闭**：点击面板外任意位置或按 Esc 即收起；选中一条历史自动收起（此前只能再点一次按钮收）。\n- **底部发送按钮不再被圆角裁角**：底栏右侧按钮的右边距随主题圆角自动让位——圆角拉得再大，「▼／清空发送区／发送」的右下角也不会被容器圆角裁掉。\n- **按钮圆角随主题**：工具栏与发送按钮的圆角从写死 4px 改为主题圆角档（默认外观不变，拉大圆角时跟随）。\n- 要求 LinkDesk **0.2.20 或更高**（未变）。"
+          "publishedAt": "2026-11-06T18:05:48.474Z"
         },
         {
           "version": "1.0.33",
