@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@linkdesk/plugin-sdk/schemas/plugin.schema.json",
   "pluginId": "serial-monitor",
   "name": "串口监视器",
-  "version": "1.0.39",
+  "version": "1.0.40",
   "category": "hardware",
   "categories": [
     "serial"
@@ -569,5 +569,12 @@
       "plugin": "protocol-bracket",
       "reason": "协议解析——不装则只能查看原始数据"
     }
-  ]
+  ],
+  "readme": {
+    "default": "README.md",
+    "locales": {
+      "zh": "README.md",
+      "en": "docs/readme/en.md"
+    }
+  }
 }

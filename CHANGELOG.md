@@ -1,5 +1,10 @@
 # 更新日志
 
+## v1.0.40（2026-11-24）
+
+- **i18n 收口**：命令/设置等 manifest 显示文本补齐英文；宿主按插件命名空间解析显示文本（市场/命令面板/菜单不再自己 t() 插件数据）。
+- **README 多语言**：新增 `docs/readme/en.md`，`plugin.json` 声明 `readme.locales`（zh→README.md，en→docs/readme/en.md）；共享图仍住 `resources/`。
+
 ## v1.0.39（2026-11-23）
 
 - 圆角改吃宿主 `--radius-*`（零视觉）
