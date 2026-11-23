@@ -1,29 +1,39 @@
 {
   "version": "1",
-  "updatedAt": "2026-11-23T13:51:46.960Z",
+  "updatedAt": "2026-11-23T16:41:28.189Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.39",
+      "version": "1.0.40",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "Encaron"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.39/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.40/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.39/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.40/resources/icon.svg",
       "marketIconSource": "url",
       "minAppVersion": "0.2.20",
       "category": "hardware",
       "categories": [
         "serial"
       ],
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.39/README.md",
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.39/serial-monitor.linkdesk-plugin",
-      "size": 164950,
-      "publishedAt": "2026-11-23T13:51:46.960Z",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.40/README.md",
+      "readmeLocales": {
+        "zh": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.40/README.md",
+        "en": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.40/docs/readme/en.md"
+      },
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.40/serial-monitor.linkdesk-plugin",
+      "size": 180891,
+      "publishedAt": "2026-11-23T16:41:28.189Z",
       "versions": [
+        {
+          "version": "1.0.40",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.40/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-11-23T16:41:28.189Z",
+          "changelog": "- **i18n 收口**：命令/设置等 manifest 显示文本补齐英文；宿主按插件命名空间解析显示文本（市场/命令面板/菜单不再自己 t() 插件数据）。\n- **README 多语言**：新增 `docs/readme/en.md`，`plugin.json` 声明 `readme.locales`（zh→README.md，en→docs/readme/en.md）；共享图仍住 `resources/`。"
+        },
         {
           "version": "1.0.39",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.39/serial-monitor.linkdesk-plugin",
@@ -51,8 +61,7 @@
         {
           "version": "1.0.35",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.35/serial-monitor.linkdesk-plugin",
-          "publishedAt": "2026-11-06T18:32:38.782Z",
-          "changelog": "- **按钮全面收编壳共享组件（试验刀）**：顶部工具栏（暂停／导出日志／清空接收区／搜索）、发送栏（▼／清空发送区／发送）、控制条（打开／断开）、快捷发送（药丸／确认／取消／＋添加）全部从插件自绘样式换成**壳共享 Button**（`@linkdesk/ui`）——悬停提示、禁用态、焦点环、圆角随主题全部由壳统一供给，插件侧删掉四段自绘按钮 CSS。\n- **视觉变化（本刀的试验点，不合口味随时说，回退很快）**：打开＝**绿色实心**／断开＝**红色描边**（语义动作层级，同市场详情页「安装／卸载」）、发送＝实心主题色、快捷发送药丸从胶囊形变标准按钮形（等宽字体暂失）、暂停／搜索的按下高亮暂缺（暂停态由图标切换表达）。\n- 本刀纯视觉／组件替换，**行为零变更**（所有 onClick／悬停提示／右键菜单原样）。\n- 要求 LinkDesk **0.2.20 或更高**（未变）。"
+          "publishedAt": "2026-11-06T18:32:38.782Z"
         },
         {
           "version": "1.0.34",
