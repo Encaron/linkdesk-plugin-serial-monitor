@@ -31,9 +31,9 @@
  * 不进设置文件、不做持久化。跨 reload 的旧游标由命令层挡下（`cursor-ahead`，见 `serialCommands.ts`）。
  */
 
-import type { SerialDataPayload } from "@linkdesk/contracts";
 import { RECEIVE_LOG_MAX } from "../constants";
-import { toHexDisplay } from "../utils/text";
+import { toHexDisplayBytes } from "../utils/text";
+import { ensureSerialInboundSubscribed, resetSerialInboundPort, subscribeSerialInbound } from "./serialInbound";
 
 /** 日志里一条——给 AI 的最小充分形状（⛔ 不带显示口径的时间戳前缀/转义：那是视图的事）。 */
 export interface ReceiveLogItem {
@@ -41,9 +41,11 @@ export interface ReceiveLogItem {
   seq: number;
   /** 来源端口（路由键，照 `payload.portName`） */
   portName: string;
+  /** D1：方向——rx = 设备上报，tx = 我们发出去的 */
+  dir: "rx" | "tx";
   /** 解码后的行文本（wire 原样；转义/时间戳前缀只在视图渲染时加，故这里不加） */
   text: string;
-  /** 同文本的 HEX 形态——与视图 HEX 栏同源（`toHexDisplay` 单点） */
+  /** 同行的 HEX 形态——由**原始字节**算（`toHexDisplayBytes` 单点；GBK/二进制不失真） */
   hex: string;
   /** 到达时刻（epoch ms）——AI 算时序用（显示用的格式化时间戳不在这里造） */
   ts: number;
@@ -77,6 +79,7 @@ export const _receiveLog = {
  */
 export function notePortOpened(portName: string, at: number = Date.now()): void {
   if (!portName) return;
+  resetSerialInboundPort(portName);
   _receiveLog.openEpochs.set(portName, at);
 }
 
@@ -86,30 +89,36 @@ export function notePortOpened(portName: string, at: number = Date.now()): void 
  * 🔴 **进程级常驻、故意不给 unsubscribe**：池页面的寿命就是本模块的寿命（页面一 reload 连同监听器
  * 一起没，不存在泄漏）。⛔ 别把它挂进视图的引用计数生命周期——AI 的 `openPort` 往往发生在**没有任何
  * 串口标签页**的时候，挂视图 = 那时收不到，闭环第一腿直接断。
+ *
+ * D1：数据订阅已收口到 `serialInbound`（唯一解码头）——本模块只消费解码后的行。
  */
 export function ensureReceiveLogSubscribed(): boolean {
   if (_receiveLog.subscribed) return true;
-  const s = window.linkdesk?.serial;
-  if (!s?.onData) return false; // 无串口面（测试替身/非池环境）——如实说没挂上，⛔ 不假装收着
-  s.onData((payload: SerialDataPayload) => {
-    // 载荷类型在运行期无编译期兜底（照 useSerialIpcEvents 的容错口径）：string 兼容旧形状
-    const portName = typeof payload === "string" ? "" : (payload?.portName ?? "");
-    const text = typeof payload === "string" ? payload : (payload?.text ?? "");
-    writeReceiveLog(portName, text);
+  if (!ensureSerialInboundSubscribed()) return false;
+  subscribeSerialInbound((line) => {
+    writeReceiveLog(line.portName, line.text, line.bytes, line.dir, line.at);
   });
   _receiveLog.subscribed = true;
   return true;
 }
 
-/** 收一条——唯一写入咽喉（订阅回调走它；测试也走它，⛔ 别在测试里手推 `items`）。 */
-export function writeReceiveLog(portName: string, text: string): void {
-  const ts = Date.now();
+/** 收一条——唯一写入咽喉（订阅回调走它；测试也走它，⛔ 别在测试里手推 `items`）。
+ *  `bytes` 缺省 = 按 UTF-8 编码 text（旧调用/测试的兼容形；D1 起接收路径必传真实字节）。 */
+export function writeReceiveLog(
+  portName: string,
+  text: string,
+  bytes?: Uint8Array,
+  dir: "rx" | "tx" = "rx",
+  at?: number,
+): void {
+  const ts = at ?? Date.now();
   if (portName) _receiveLog.lastDataAt.set(portName, ts);
   _receiveLog.items.push({
     seq: ++_receiveLog.seq,
     portName,
+    dir,
     text,
-    hex: toHexDisplay(text),
+    hex: toHexDisplayBytes(bytes ?? new TextEncoder().encode(text)),
     ts,
     uptimeMs: _receiveLog.openEpochs.get(portName) != null ? ts - _receiveLog.openEpochs.get(portName)! : null,
   });
@@ -160,6 +169,8 @@ export interface ReceiveLogQuery {
   limit?: number;
   /** 只看这个口（缺省 = 所有口） */
   portName?: string;
+  /** 只看某个方向（缺省 = 两个方向都要；`query` 等应答只认 rx） */
+  dir?: "rx" | "tx";
   /** 行文本以此开头才算命中（服务端过滤） */
   prefix?: string;
   /** 行文本匹配此正则才算命中（服务端过滤） */
@@ -191,6 +202,7 @@ export function queryReceiveLog(q: ReceiveLogQuery): ReceiveLogQueryResult {
   const portName = q.portName;
   const matches = (item: ReceiveLogItem): boolean => {
     if (portName && item.portName !== portName) return false;
+    if (q.dir && item.dir !== q.dir) return false;
     if (q.prefix && !item.text.startsWith(q.prefix)) return false;
     if (q.grep && !q.grep.test(item.text)) return false;
     return true;

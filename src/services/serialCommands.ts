@@ -353,7 +353,7 @@ async function waitUntilLine(o: { re: RegExp; startSeq: number; portName?: strin
   let cursor = o.startSeq;
   let tick = 0;
   for (;;) {
-    const page = queryReceiveLog({ since: cursor, limit: 1, portName: o.portName, grep: o.re });
+    const page = queryReceiveLog({ since: cursor, limit: 1, portName: o.portName, grep: o.re, dir: "rx" });
     if (page.matched > 0) {
       const hit = page.items[0];
       return { ok: true, matched: true, line: hit.text, seq: hit.seq, portName: hit.portName, cursor: hit.seq, tookMs: Date.now() - t0, scanned: page.scanned };
@@ -380,7 +380,7 @@ async function waitExpect(o: { port: string; startSeq: number; expect: string; t
   const lines: ReceiveLogItem[] = [];
   let tick = 0;
   for (;;) {
-    const page = queryReceiveLog({ since: cursor, portName: o.port, limit: RECEIVE_READ_LIMIT_MAX });
+    const page = queryReceiveLog({ since: cursor, portName: o.port, limit: RECEIVE_READ_LIMIT_MAX, dir: "rx" });
     cursor = page.cursor;
     if (page.items.length > 0) {
       lines.push(...page.items);
@@ -684,7 +684,7 @@ export function registerSerialCommands(): number {
     async (args?: SetCodingArgs) => {
       const coding = args?.coding;
       if (!coding) throw new Error(`缺少 coding——可选：${SERIAL_CODINGS.join(" / ")}`);
-      if (!SERIAL_CODINGS.includes(coding)) {
+      if (!(SERIAL_CODINGS as readonly string[]).includes(coding)) {
         // 取值限于下拉那一套——否则会造出「命令设得进、下拉选不出」的新不一致
         throw new Error(`不支持的编码 "${coding}"——可选：${SERIAL_CODINGS.join(" / ")}`);
       }
@@ -744,19 +744,7 @@ export function registerSerialCommands(): number {
     { title: i18n.t("删除"), category: cat, when: whenActive },
   );
 
-  /* ── 快捷发送：编辑（编辑态住视图 ⇒ 无视图时给可读报错，而不是 null 解引用）── */
-  reg(
-    "serial-monitor.quickSendEdit",
-    async (...args) => {
-      const ctx = args[0] as { quickSendName?: string } | undefined;
-      if (!ctx?.quickSendName) throw new Error("缺少 quickSendName——要编辑哪一颗快捷发送");
-      throw new Error(
-        `编辑快捷发送「${ctx.quickSendName}」需要打开该会话的串口标签页（编辑框是视图态，无视图无处显示）`
-        + "——先开标签页，或在会话里直接改快捷发送内容",
-      );
-    },
-    { title: i18n.t("编辑"), category: cat, when: whenActive },
-  );
+  /* ── 快捷发送：编辑——T9 收敛：编辑态住视图 ⇒ 只由视图注册（无视图调用由壳回 EVIEWREQUIRED）── */
 
   /* ── 接收面读数·拉取（M2 AI#64——门③ 读得到串口回声；05 案 B① 加宽取法，仍只此一个读口）──
      回执三态（与壳 AI#55/AI#60、插件侧 AI#56 同口径，⛔ 不是「ok 就是干成了」）：
@@ -1045,7 +1033,7 @@ export function registerSerialCommands(): number {
         _queryBusy.delete(portName);
       }
     },
-    { title: i18n.t("发送并等待应答"), category: cat, when: "false" },
+    { title: i18n.t("发送并等待应答"), category: cat, when: "false", async: true },
   );
 
   /* ── 05 案 E-1：reset——DTR/RTS 电气复位（只调既有 setDtr/setRts，零新 IPC）──
@@ -1187,7 +1175,7 @@ export function registerSerialCommands(): number {
     });
   }
 
-  // 21 = 九条动作/读数（AI#23/AI#64/05 案加宽）＋ 两条寻址读（listPorts/listSessions）
+  // 20 = 八条动作/读数（T9 起 quickSendEdit 归视图，不在入口）＋ 两条寻址读（listPorts/listSessions）
   //    ＋ 六条会话态开关 ＋ 05 案四条（reopen A-4 / mark C-1 / query C-4 / reset E-1）
-  return 9 + 2 + 4 + SESSION_TOGGLES.length;
+  return 8 + 2 + 4 + SESSION_TOGGLES.length;
 }

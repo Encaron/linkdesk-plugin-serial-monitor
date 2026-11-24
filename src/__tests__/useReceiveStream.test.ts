@@ -16,6 +16,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useReceiveStream } from "../views/SerialMonitorView/useReceiveStream";
 import { readSettings } from "../views/SerialMonitorView/settings";
+import { _resetSerialInbound } from "../services/serialInbound";
 import { RingBuffer } from "../utils/RingBuffer";
 import { PAUSED_BUFFER_MAX, RING_BUFFER_CAPACITY } from "../constants";
 import type { ReceiveItem } from "../types";
@@ -74,13 +75,30 @@ function setup(patch: Partial<Opts> = {}) {
   return { opts, ringRef, renderLine, appendLine, result, unmount };
 }
 
-/** 喂一条 IPC 事件（走真实订阅回调，不是直接写环） */
-const feed = (payload: unknown) => act(() => { dataCb?.(payload); });
+/** 喂一条 IPC 事件（走真实订阅回调，不是直接写环）。
+ *  D1 夹具：旧用例的 `{portName, text}` 自动转成 `{dir:"rx", data:bytes+"\n", at}`——
+ *  `\n` 让 serialInbound 当场成行（不必等 100ms idle flush）。 */
+const feed = (payload: unknown) =>
+  act(() => {
+    const p = payload as { portName?: string; text?: string } | null;
+    if (p && typeof p === "object" && typeof p.text === "string") {
+      dataCb?.({
+        portName: p.portName ?? "",
+        dir: "rx",
+        data: new TextEncoder().encode(`${p.text}\n`),
+        at: Date.now(),
+      });
+    } else {
+      dataCb?.(payload);
+    }
+  });
 const feedSys = (payload: unknown) => act(() => { systemCb?.(payload); });
 /** 推进假时钟 ⇒ 触发一帧 rAF 消费 */
 const frame = () => act(() => { vi.advanceTimersByTime(20); });
 
 beforeEach(() => {
+  // 串口入站是模块级单例——每例清监听者/缓冲/订阅记忆（否则上一例的 view 订阅会继续写旧环）
+  _resetSerialInbound();
   // ⚠️ 必须 `useFakeTimers({ now })` **一次给全**：`useFakeTimers()` 之后再 `setSystemTime()`
   //    会把 rAF 的到期时刻算在旧时钟基上 ⇒ `advanceTimersByTime()` 永远追不到（实测 fired=0）。
   vi.useFakeTimers({ now: new Date(2026, 0, 2, 3, 4, 5, 6) });

@@ -17,6 +17,7 @@ import {
   _receiveLog, ensureReceiveLogSubscribed, readReceiveLog, receiveLogFirst, writeReceiveLog,
   notePortOpened, queryReceiveLog,
 } from "../services/receiveLog";
+import { _resetSerialInbound } from "../services/serialInbound";
 import { RECEIVE_LOG_MAX, RECEIVE_READ_LIMIT_DEFAULT } from "../constants";
 import { deleteOpenPort, setOpenPort } from "../services/SerialContext/store";
 
@@ -29,9 +30,10 @@ let statusReply: Array<{ portName: string }> | null = [];
 /** 记录式假件：视图那条链的订阅（用来证明两路并存） */
 let viewStream: Array<{ portName: string; text: string }> = [];
 
-/** 主进程广播一条数据——所有订阅者各收一份（扇出） */
+/** 主进程广播一条数据——所有订阅者各收一份（扇出）；D1 形状：字节 ＋ 方向 ＋ `\n` 成行 */
 function emitData(portName: string, text: string): void {
-  for (const cb of [...dataSubs]) cb({ portName, text });
+  const payload = { portName, dir: "rx" as const, data: new TextEncoder().encode(`${text}\n`), at: Date.now() };
+  for (const cb of [...dataSubs]) cb(payload);
 }
 
 beforeAll(() => {
@@ -52,6 +54,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  _resetSerialInbound();
   _receiveLog.items = [];
   _receiveLog.seq = 0;
   _receiveLog.subscribed = false;
@@ -95,8 +98,8 @@ describe("订阅面：进程级常驻 ＋ 幂等 ＋ 与视图并存", () => {
     subscribe();
     // 视图链的替身：登记第二个订阅者（真机里就是 useSerialIpcEvents 那条）
     dataSubs.push((p) => {
-      const q = p as { portName: string; text: string };
-      viewStream.push({ portName: q.portName, text: q.text });
+      const q = p as { portName: string; data: Uint8Array };
+      viewStream.push({ portName: q.portName, text: new TextDecoder().decode(q.data).trim() });
     });
 
     emitData("COM5", "echo-1");

@@ -42,7 +42,6 @@ export const RESET_METHOD_DTR = "dtr";
 export const RESET_METHOD_RTS = "rts";
 export const RESET_METHOD_BOTH = "both";
 
-/** 收发编码可选集——**单点真相源**：侧栏「收发设置」两个下拉（接收/发送编码）与命令面
- *  `serial-monitor.setSendCoding` 的取值校验都读这一份（⛔ 别再写第二份数组：
- *  两处一旦分叉，「命令设得进、下拉选不出」就是新的不一致）。 */
-export const SERIAL_CODINGS = ["UTF-8", "GB2312", "Shift-JIS", "Latin-1"];
+/** 收发编码可选集——**单点真相源**：D2 起从 `@linkdesk/plugin-sdk/runtime` 取（共享清单），
+ *  ⛔ 本插件不再抄第二份。接收/发送下拉与命令面 `serial-monitor.setSendCoding` 的取值校验都读这一份。 */
+export { SERIAL_CODINGS } from "@linkdesk/plugin-sdk/runtime";

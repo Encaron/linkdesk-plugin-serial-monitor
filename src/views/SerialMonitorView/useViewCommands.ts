@@ -5,15 +5,14 @@
  * 本文件 = 复制 / 全选 / 清空 / 快捷发送 / 导出日志；开关类命令在 useToggleCommands。
  * 「发送」与端口/会话族命令**不在这里**——它们不依赖视图，住 `services/serialCommands.ts`（M2 AI#23）。
  *
- * 清理归口：最后一个串口监视器标签页关闭时 unregisterCommands（#36k2）——放本文件（同批 effect 最先声明者）。
+ * T9：作用域分区由池接管——视图卸载只摘本视图作用域，⛔ 不再整片 unregister＋补注册。
  */
 
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { clearAllDecos } from "../../cm6/decorations";
 import { saveFilePicker } from "../../utils/saveFile";
-import { _cmdMap, getActiveCmd } from "../../services/commandBridge";
-import { registerSerialCommands } from "../../services/serialCommands";
+import { getActiveCmd } from "../../services/commandBridge";
 
 export function useViewCommands() {
   const { t } = useTranslation();
@@ -65,12 +64,6 @@ export function useViewCommands() {
         getActiveCmd()!.setQsAdding(true);
       }
     }, { title: t("编辑"), category: cat });
-    reg("serial-monitor.quickSendDelete", async (...args) => {
-      const ctx = args[0] as { quickSendName?: string } | undefined;
-      if (ctx?.quickSendName) {
-        getActiveCmd()!.handleDeleteQuickSend(ctx.quickSendName);
-      }
-    }, { title: t("删除"), category: cat });
     reg("serial-monitor.clearSend", async () => {
       getActiveCmd()!.setSendValue("");
     }, { title: t("清空发送区"), category: cat });
@@ -92,17 +85,5 @@ export function useViewCommands() {
         // 用户取消保存——静默
       }
     }, { title: t("导出日志"), category: cat });
-
-    // #36k2：最后一个串口监视器标签页关闭时清理命令注册
-    return () => {
-      if (_cmdMap.size <= 1) {
-        lk?.commands?.unregisterCommands?.("serial-monitor");
-        // M2 AI#23：上面那句是**粗粒度**的（`unregisterCommands(pluginId)` 按属主整片摘，
-        // 没有单条版）——插件级命令（端口/会话/发送族，入口顶层注册）被一并摘掉了。
-        // 原样补回：它们是模块级单例（_openPorts/_store.sessions）的命令面，与视图在场与否无关。
-        // ⚠️ 补回走的是同一份 registerSerialCommands——⛔ 别在这里手写第二条注册链（两份迟早分叉）。
-        registerSerialCommands();
-      }
-    };
   }, [t]);
 }

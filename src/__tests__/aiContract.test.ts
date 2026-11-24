@@ -22,6 +22,7 @@ import { _sessionListeners, _store } from "../hooks/useSerialSessions/store";
 import { _cmdMap, type ActiveCmd } from "../services/commandBridge";
 import { deleteOpenPort, hasOpenPort, setOpenPort } from "../services/SerialContext/store";
 import { _receiveLog, ensureReceiveLogSubscribed, writeReceiveLog } from "../services/receiveLog";
+import { _resetSerialInbound } from "../services/serialInbound";
 
 type CmdHandler = (...args: unknown[]) => unknown;
 const handlers = new Map<string, CmdHandler>();
@@ -41,7 +42,8 @@ let statusReply: Array<{ portName: string; baudRate: number }> | null = [];
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const emitData = (portName: string, text: string): void => {
-  for (const cb of [...dataSubs]) cb({ portName, text });
+  const payload = { portName, dir: "rx" as const, data: new TextEncoder().encode(`${text}\n`), at: Date.now() };
+  for (const cb of [...dataSubs]) cb(payload);
 };
 
 beforeAll(() => {
@@ -77,6 +79,7 @@ beforeAll(() => {
 
 /** 每例回到干净态——模块级单例手动清（同 serialCommands.test.ts 的 resetWorld 口径，加 05 案的两份） */
 beforeEach(() => {
+  _resetSerialInbound();
   _store.sessions = [];
   _store.activeSessionId = null;
   _store.sessionCounter = 0;

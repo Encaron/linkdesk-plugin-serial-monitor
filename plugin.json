@@ -2,12 +2,12 @@
   "$schema": "./node_modules/@linkdesk/plugin-sdk/schemas/plugin.schema.json",
   "pluginId": "serial-monitor",
   "name": "串口监视器",
-  "version": "1.0.42",
+  "version": "1.0.43",
   "category": "hardware",
   "categories": [
     "serial"
   ],
-  "minAppVersion": "0.2.20",
+  "minAppVersion": "0.2.65",
   "icon": "resources/icon-bar.svg",
   "marketIcon": "resources/icon.svg",
   "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
@@ -85,6 +85,10 @@
     "commands": [
       {
         "id": "serial-monitor.copy",
+        "risk": "R1",
+        "activation": "view",
+        "returns": [],
+        "example": {},
         "title": "复制",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -92,6 +96,10 @@
       },
       {
         "id": "serial-monitor.selectAll",
+        "risk": "R1",
+        "activation": "view",
+        "returns": [],
+        "example": {},
         "title": "全选",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -99,6 +107,10 @@
       },
       {
         "id": "serial-monitor.clear",
+        "risk": "R1",
+        "activation": "view",
+        "returns": [],
+        "example": {},
         "title": "清空接收区",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -106,6 +118,10 @@
       },
       {
         "id": "serial-monitor.clearSend",
+        "risk": "R1",
+        "activation": "view",
+        "returns": [],
+        "example": {},
         "title": "清空发送区",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -113,6 +129,43 @@
       },
       {
         "id": "serial-monitor.togglePause",
+        "risk": "R1",
+        "activation": "view",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the pause state flipped"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Target session id"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Session name"
+          },
+          {
+            "name": "field",
+            "type": "string",
+            "description": "paused"
+          },
+          {
+            "name": "value",
+            "type": "boolean",
+            "description": "Paused after the flip"
+          },
+          {
+            "name": "previous",
+            "type": "boolean",
+            "description": "Paused before the flip"
+          }
+        ],
+        "example": {
+          "sessionId": "s1"
+        },
         "title": "切换接收暂停",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor' && serial-monitor.sourceOpen",
@@ -127,13 +180,54 @@
       },
       {
         "id": "serial-monitor.exportLog",
+        "risk": "R2",
+        "activation": "view",
+        "returns": [],
+        "example": {},
         "title": "导出日志",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
-        "description": "把接收区当前内容导出为 .txt 日志文件（弹保存对话框）。"
+        "description": "把接收区当前内容导出为 .txt 日志文件（弹保存对话框）。无视图时用 serial-monitor.readSince（entry/R0）取接收日志。"
       },
       {
         "id": "serial-monitor.toggleSendMode",
+        "risk": "R1",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the switch was applied"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Target session id"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Session name"
+          },
+          {
+            "name": "field",
+            "type": "string",
+            "description": "Which session field was flipped"
+          },
+          {
+            "name": "value",
+            "type": "boolean|string",
+            "description": "Value after the flip"
+          },
+          {
+            "name": "previous",
+            "type": "boolean|string",
+            "description": "Value before the flip"
+          }
+        ],
+        "example": {
+          "sessionId": "s1"
+        },
         "title": "切换发送格式（文本 / HEX）",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -148,6 +242,43 @@
       },
       {
         "id": "serial-monitor.toggleEcho",
+        "risk": "R1",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the switch was applied"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Target session id"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Session name"
+          },
+          {
+            "name": "field",
+            "type": "string",
+            "description": "Which session field was flipped"
+          },
+          {
+            "name": "value",
+            "type": "boolean|string",
+            "description": "Value after the flip"
+          },
+          {
+            "name": "previous",
+            "type": "boolean|string",
+            "description": "Value before the flip"
+          }
+        ],
+        "example": {
+          "sessionId": "s1"
+        },
         "title": "切换消息回显",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -162,6 +293,43 @@
       },
       {
         "id": "serial-monitor.toggleLineNumbers",
+        "risk": "R1",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the switch was applied"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Target session id"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Session name"
+          },
+          {
+            "name": "field",
+            "type": "string",
+            "description": "Which session field was flipped"
+          },
+          {
+            "name": "value",
+            "type": "boolean|string",
+            "description": "Value after the flip"
+          },
+          {
+            "name": "previous",
+            "type": "boolean|string",
+            "description": "Value before the flip"
+          }
+        ],
+        "example": {
+          "sessionId": "s1"
+        },
         "title": "切换行号显示",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -176,6 +344,43 @@
       },
       {
         "id": "serial-monitor.toggleSystemLog",
+        "risk": "R1",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the switch was applied"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Target session id"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Session name"
+          },
+          {
+            "name": "field",
+            "type": "string",
+            "description": "Which session field was flipped"
+          },
+          {
+            "name": "value",
+            "type": "boolean|string",
+            "description": "Value after the flip"
+          },
+          {
+            "name": "previous",
+            "type": "boolean|string",
+            "description": "Value before the flip"
+          }
+        ],
+        "example": {
+          "sessionId": "s1"
+        },
         "title": "切换系统消息独立显示",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -190,6 +395,43 @@
       },
       {
         "id": "serial-monitor.toggleAutoRepeat",
+        "risk": "R3",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the switch was applied"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Target session id"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Session name"
+          },
+          {
+            "name": "field",
+            "type": "string",
+            "description": "Which session field was flipped"
+          },
+          {
+            "name": "value",
+            "type": "boolean|string",
+            "description": "Value after the flip"
+          },
+          {
+            "name": "previous",
+            "type": "boolean|string",
+            "description": "Value before the flip"
+          }
+        ],
+        "example": {
+          "sessionId": "s1"
+        },
         "title": "切换自动重发",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -204,6 +446,43 @@
       },
       {
         "id": "serial-monitor.toggleAutoClear",
+        "risk": "R1",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the switch was applied"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Target session id"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Session name"
+          },
+          {
+            "name": "field",
+            "type": "string",
+            "description": "Which session field was flipped"
+          },
+          {
+            "name": "value",
+            "type": "boolean|string",
+            "description": "Value after the flip"
+          },
+          {
+            "name": "previous",
+            "type": "boolean|string",
+            "description": "Value before the flip"
+          }
+        ],
+        "example": {
+          "sessionId": "s1"
+        },
         "title": "切换自动清屏",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -218,6 +497,10 @@
       },
       {
         "id": "serial-monitor.quickSendFill",
+        "risk": "R1",
+        "activation": "view",
+        "returns": [],
+        "example": {},
         "title": "回填到发送区",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -232,6 +515,10 @@
       },
       {
         "id": "serial-monitor.quickSendEdit",
+        "risk": "R1",
+        "activation": "view",
+        "returns": [],
+        "example": {},
         "title": "编辑",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -246,6 +533,40 @@
       },
       {
         "id": "serial-monitor.quickSendDelete",
+        "risk": "R2",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "deleted",
+            "type": "boolean",
+            "description": "True when the quick-send entry was removed"
+          },
+          {
+            "name": "key",
+            "type": "string",
+            "description": "Quick-send name targeted"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Owning session id"
+          },
+          {
+            "name": "remaining",
+            "type": "number",
+            "optional": true,
+            "description": "Quick-send entries left"
+          },
+          {
+            "name": "reason",
+            "type": "string",
+            "optional": true,
+            "description": "Why nothing was deleted"
+          }
+        ],
+        "example": {
+          "quickSendName": "AT"
+        },
         "title": "删除",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -260,6 +581,57 @@
       },
       {
         "id": "serial-monitor.openPort",
+        "risk": "R1",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "opened",
+            "type": "boolean",
+            "description": "True when a new port open was actually performed"
+          },
+          {
+            "name": "alreadyOpen",
+            "type": "boolean",
+            "optional": true,
+            "description": "Present when it was already open (nothing was done)"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Owning session id"
+          },
+          {
+            "name": "portName",
+            "type": "string",
+            "description": "Port that is open"
+          },
+          {
+            "name": "previousPortName",
+            "type": "string|null",
+            "description": "Port the session was bound to before this call"
+          },
+          {
+            "name": "baudRate",
+            "type": "number",
+            "description": "Baud rate in effect"
+          },
+          {
+            "name": "encoding",
+            "type": "string|null",
+            "optional": true,
+            "description": "Receive coding recorded on the session"
+          },
+          {
+            "name": "frame",
+            "type": "object",
+            "optional": true,
+            "description": "Frame format {dataBits, stopBits, parity}"
+          }
+        ],
+        "example": {
+          "portName": "COM3",
+          "baudRate": 115200
+        },
         "title": "打开端口",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -274,6 +646,40 @@
       },
       {
         "id": "serial-monitor.closePort",
+        "risk": "R3",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "closed",
+            "type": "boolean",
+            "description": "True when the port was closed by this call"
+          },
+          {
+            "name": "alreadyClosed",
+            "type": "boolean",
+            "optional": true,
+            "description": "Present when it was already closed"
+          },
+          {
+            "name": "portName",
+            "type": "string",
+            "description": "Port targeted"
+          },
+          {
+            "name": "sessionId",
+            "type": "string|null",
+            "description": "Owner session of that port (null when no session is bound)"
+          },
+          {
+            "name": "requestedSessionId",
+            "type": "string",
+            "optional": true,
+            "description": "Echo of the requested sessionId when it did not own the port"
+          }
+        ],
+        "example": {
+          "portName": "COM3"
+        },
         "title": "关闭端口",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -288,6 +694,46 @@
       },
       {
         "id": "serial-monitor.closeSession",
+        "risk": "R3",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "closed",
+            "type": "boolean",
+            "description": "True when the session was removed"
+          },
+          {
+            "name": "denied",
+            "type": "boolean",
+            "optional": true,
+            "description": "Present when the user declined the close confirmation"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Session id"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Session name"
+          },
+          {
+            "name": "portDisconnected",
+            "type": "boolean",
+            "optional": true,
+            "description": "Whether its port was open and got disconnected"
+          },
+          {
+            "name": "remaining",
+            "type": "number",
+            "optional": true,
+            "description": "Sessions left after removal"
+          }
+        ],
+        "example": {
+          "sessionId": "s1"
+        },
         "title": "关闭串口会话",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -302,6 +748,28 @@
       },
       {
         "id": "serial-monitor.setSendCoding",
+        "risk": "R1",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Target session id"
+          },
+          {
+            "name": "sendCoding",
+            "type": "string",
+            "description": "Send coding after the change"
+          },
+          {
+            "name": "sendMode",
+            "type": "string",
+            "description": "Send mode of that session"
+          }
+        ],
+        "example": {
+          "coding": "UTF-8"
+        },
         "title": "设置发送编码",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -316,6 +784,48 @@
       },
       {
         "id": "serial-monitor.send",
+        "risk": "R2",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "sent",
+            "type": "boolean",
+            "description": "True when bytes were written"
+          },
+          {
+            "name": "mode",
+            "type": "string",
+            "description": "text | hex"
+          },
+          {
+            "name": "encoding",
+            "type": "string",
+            "optional": true,
+            "description": "Coding used for text mode"
+          },
+          {
+            "name": "bytes",
+            "type": "number",
+            "optional": true,
+            "description": "Byte count for hex mode"
+          },
+          {
+            "name": "portName",
+            "type": "string|null",
+            "description": "Target port (null = default single-port rule)"
+          },
+          {
+            "name": "reason",
+            "type": "string",
+            "optional": true,
+            "description": "Why nothing was sent (e.g. empty content)"
+          }
+        ],
+        "example": {
+          "sendMode": "text",
+          "data": "AT",
+          "portName": "COM3"
+        },
         "title": "发送",
         "category": "串口监视器",
         "when": "false",
@@ -347,6 +857,84 @@
       },
       {
         "id": "serial-monitor.readSince",
+        "risk": "R0",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "False only for malformed calls"
+          },
+          {
+            "name": "items",
+            "type": "array",
+            "description": "Log items [{seq,portName,dir,text,hex,ts,uptimeMs}]"
+          },
+          {
+            "name": "cursor",
+            "type": "number",
+            "description": "Cursor after this read"
+          },
+          {
+            "name": "count",
+            "type": "number",
+            "optional": true,
+            "description": "Items returned"
+          },
+          {
+            "name": "lost",
+            "type": "number",
+            "optional": true,
+            "description": "Items rolled out before this cursor"
+          },
+          {
+            "name": "noop",
+            "type": "boolean",
+            "optional": true,
+            "description": "Present when there is nothing new / call not applicable"
+          },
+          {
+            "name": "reason",
+            "type": "string",
+            "optional": true,
+            "description": "no-new-data | cursor-required | bad-* | no-serial-face"
+          },
+          {
+            "name": "state",
+            "type": "object",
+            "optional": true,
+            "description": "Port state {paused, portOpen, devicePresent}"
+          },
+          {
+            "name": "scanned",
+            "type": "number",
+            "optional": true,
+            "description": "Items scanned when filtering"
+          },
+          {
+            "name": "matched",
+            "type": "number",
+            "optional": true,
+            "description": "Items matched when filtering"
+          },
+          {
+            "name": "truncated",
+            "type": "boolean",
+            "optional": true,
+            "description": "True when limit was clamped"
+          },
+          {
+            "name": "history",
+            "type": "boolean",
+            "optional": true,
+            "description": "True when since:0/tail was used"
+          }
+        ],
+        "example": {
+          "since": 0,
+          "limit": 50,
+          "portName": "COM3"
+        },
         "title": "读取接收数据",
         "category": "串口监视器",
         "when": "false",
@@ -401,6 +989,51 @@
       },
       {
         "id": "serial-monitor.receiveStatus",
+        "risk": "R0",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the read succeeded"
+          },
+          {
+            "name": "cursor",
+            "type": "number",
+            "description": "Current log watermark"
+          },
+          {
+            "name": "first",
+            "type": "number",
+            "description": "Oldest retained seq"
+          },
+          {
+            "name": "count",
+            "type": "number",
+            "description": "Items retained"
+          },
+          {
+            "name": "capacity",
+            "type": "number",
+            "description": "Ring capacity"
+          },
+          {
+            "name": "lastDataAt",
+            "type": "number|null",
+            "description": "Last receive time (epoch ms)"
+          },
+          {
+            "name": "idleMs",
+            "type": "number|null",
+            "description": "Milliseconds since last receive"
+          },
+          {
+            "name": "ports",
+            "type": "array",
+            "description": "Per-port status entries"
+          }
+        ],
+        "example": {},
         "title": "接收面水位",
         "category": "串口监视器",
         "when": "false",
@@ -408,6 +1041,31 @@
       },
       {
         "id": "serial-monitor.listSessions",
+        "risk": "R0",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the read succeeded"
+          },
+          {
+            "name": "count",
+            "type": "number",
+            "description": "Sessions listed"
+          },
+          {
+            "name": "activeSessionId",
+            "type": "string|null",
+            "description": "Active session id"
+          },
+          {
+            "name": "sessions",
+            "type": "array",
+            "description": "Session entries (id/name/port/open/devicePresent/stale/viewMounted/paused/settings)"
+          }
+        ],
+        "example": {},
         "title": "列出串口会话",
         "category": "串口监视器",
         "when": "false",
@@ -415,6 +1073,26 @@
       },
       {
         "id": "serial-monitor.listPorts",
+        "risk": "R0",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the read succeeded"
+          },
+          {
+            "name": "count",
+            "type": "number",
+            "description": "Ports found"
+          },
+          {
+            "name": "ports",
+            "type": "array",
+            "description": "[{portName,description,open,sessionId}]"
+          }
+        ],
+        "example": {},
         "title": "列出可用串口",
         "category": "串口监视器",
         "when": "false",
@@ -422,6 +1100,43 @@
       },
       {
         "id": "serial-monitor.reopen",
+        "risk": "R3",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the port was reopened"
+          },
+          {
+            "name": "sessionId",
+            "type": "string",
+            "description": "Owner session id"
+          },
+          {
+            "name": "portName",
+            "type": "string",
+            "description": "Port reopened"
+          },
+          {
+            "name": "recovered",
+            "type": "boolean",
+            "description": "True when the recovery sequence completed"
+          },
+          {
+            "name": "reopened",
+            "type": "boolean",
+            "description": "True when it was open before (close+open), false when only opened"
+          },
+          {
+            "name": "tookMs",
+            "type": "number",
+            "description": "Elapsed milliseconds"
+          }
+        ],
+        "example": {
+          "portName": "COM3"
+        },
         "title": "重开端口",
         "category": "串口监视器",
         "when": "false",
@@ -436,6 +1151,38 @@
       },
       {
         "id": "serial-monitor.mark",
+        "risk": "R1",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the mark was stored"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Mark name"
+          },
+          {
+            "name": "cursor",
+            "type": "number",
+            "description": "Seq recorded"
+          },
+          {
+            "name": "sessionId",
+            "type": "string|null",
+            "description": "Optional session scope"
+          },
+          {
+            "name": "previous",
+            "type": "number|null",
+            "description": "Previous cursor under the same name, if any"
+          }
+        ],
+        "example": {
+          "name": "boot-start"
+        },
         "title": "标记游标",
         "category": "串口监视器",
         "when": "false",
@@ -450,6 +1197,57 @@
       },
       {
         "id": "serial-monitor.query",
+        "risk": "R2",
+        "activation": "entry",
+        "async": true,
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the exchange completed"
+          },
+          {
+            "name": "matched",
+            "type": "boolean",
+            "description": "True when expect appeared"
+          },
+          {
+            "name": "line",
+            "type": "string",
+            "optional": true,
+            "description": "Matching line"
+          },
+          {
+            "name": "lines",
+            "type": "array",
+            "optional": true,
+            "description": "All received lines while waiting"
+          },
+          {
+            "name": "elapsedMs",
+            "type": "number",
+            "optional": true,
+            "description": "Elapsed milliseconds"
+          },
+          {
+            "name": "cursor",
+            "type": "number",
+            "optional": true,
+            "description": "Cursor at the end"
+          },
+          {
+            "name": "timedOut",
+            "type": "boolean",
+            "optional": true,
+            "description": "True when the wait timed out"
+          }
+        ],
+        "example": {
+          "send": "AT",
+          "expect": "OK",
+          "timeoutMs": 1000,
+          "portName": "COM3"
+        },
         "title": "发送并等待应答",
         "category": "串口监视器",
         "when": "false",
@@ -464,6 +1262,40 @@
       },
       {
         "id": "serial-monitor.reset",
+        "risk": "R3",
+        "activation": "entry",
+        "returns": [
+          {
+            "name": "ok",
+            "type": "boolean",
+            "description": "True when the electrical reset completed"
+          },
+          {
+            "name": "portName",
+            "type": "string",
+            "description": "Port targeted"
+          },
+          {
+            "name": "method",
+            "type": "string",
+            "description": "dtr | rts | both"
+          },
+          {
+            "name": "holdMs",
+            "type": "number",
+            "description": "Hold duration"
+          },
+          {
+            "name": "tookMs",
+            "type": "number",
+            "description": "Elapsed milliseconds"
+          }
+        ],
+        "example": {
+          "method": "dtr",
+          "holdMs": 100,
+          "portName": "COM3"
+        },
         "title": "复位板子",
         "category": "串口监视器",
         "when": "false",

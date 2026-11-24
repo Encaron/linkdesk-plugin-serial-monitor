@@ -18,6 +18,7 @@ import type { HandshakeState, PortInfo, SerialFrame } from "./types";
 import { mergeStatus } from "./status";
 // 05 案 D1：openPort 原点——接收日志 `uptimeMs` 的单调时间基（重开 = 覆盖，跨重连判「新数据」）
 import { notePortOpened } from "../receiveLog";
+import { isUint8Array } from "../serialInbound";
 import {
   accumulatePortStats, _notifyPort, _setState, _writePortState,
   deleteOpenPort, getSharedState, setOpenPort,
@@ -93,14 +94,16 @@ export function _registerIPCListeners(): void {
         _setState((p) => ({ ...p, lastError: msg }));
       }
     }),
-    // E3j #77：串口数据上桌——原始数据推到大厅 events 频道，供协议插件等消费
+    // E3j #77：串口数据上桌——D1 起推**原始字节 ＋ 方向**（协议插件自己解码）
     // E5.8#29（S9 修根）：payload.portName 贴真名——多口并发错标边界消除
-    //（原贴当前活动口名，另一标签页的口的数据会错标到活动口）
     s.onData?.((payload) => {
-      const text = typeof payload === "string" ? payload : payload.text;
+      const p = payload as { portName?: unknown; dir?: unknown; data?: unknown; at?: unknown };
+      if (!isUint8Array(p.data) || typeof p.portName !== "string") return;
       window.linkdesk?.events?.emit("serial:rawData", {
-        sourceName: typeof payload === "string" ? getSharedState().sourceName : payload.portName,
-        text,
+        portName: p.portName,
+        dir: p.dir === "tx" ? "tx" : "rx",
+        data: p.data,
+        at: typeof p.at === "number" ? p.at : Date.now(),
       });
     }),
   ].filter(Boolean) as Array<() => void>;
@@ -131,6 +134,7 @@ export async function closePortFromModule(port: string): Promise<void> {
 export interface OpenPortRequest {
   portName: string;
   baudRate?: number;
+  /** D1 起**不再送给壳**（接收解码归插件，编码住会话）；保留字段给现有调用链，T23 可随插件 API 清理 */
   encoding?: string;
   frame?: SerialFrame;
   handshake?: HandshakeState;
@@ -157,7 +161,7 @@ export async function openPortFromModule(o: OpenPortRequest): Promise<boolean> {
   const baudRate = o.baudRate ?? 115200;
   // E5.8#30.17：帧格式透传——dataBits/stopBits/parity（wire 已支持）
   await s.openPort({
-    portName, baudRate, encoding: o.encoding,
+    portName, baudRate,
     dataBits: o.frame?.dataBits, stopBits: o.frame?.stopBits, parity: o.frame?.parity,
   });
   // 05 案 D1：打开成功即记 uptimeMs 原点（本口最近一次 openPort）——重开覆盖，单调时间基

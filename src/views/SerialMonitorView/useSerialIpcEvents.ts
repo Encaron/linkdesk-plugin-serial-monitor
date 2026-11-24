@@ -5,14 +5,13 @@
  * 暂停复位 / 打开即发初始化序列 / 连接状态广播 / 关闭落盘）。
  */
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useIpcEvent } from "../../hooks/useIpcEvent";
-import type { SerialDataPayload, SerialSystemPayload } from "@linkdesk/contracts";
+import type { SerialSystemPayload } from "@linkdesk/contracts";
 import { matchesPort } from "../../utils/portFilter";
 import { formatTimestamp } from "../../utils/useSendData";
-// AI#64：HEX 换算上移到 utils/text——接收日志（给 AI 的 `hex`）与视图 HEX 栏共用同一份实现
-import { toHexDisplay } from "../../utils/text";
+import { ensureSerialInboundSubscribed, subscribeSerialInbound } from "../../services/serialInbound";
 import type { RingBuffer } from "../../utils/RingBuffer";
 import type { ReceiveItem } from "../../types";
 
@@ -42,24 +41,26 @@ export function useSerialIpcEvents(o: SerialIpcEventsOptions): void {
   const sessionIdRef = useRef(sourceId);
   sessionIdRef.current = sourceId;
 
-  useIpcEvent<SerialDataPayload>("serial-data", (payload) => {
-    // C1：用当前 tab 的 session ID 判断——per-tab 绑定，非全局 activeSession
-    if (!sessionIdRef.current) return;
-    // E5.8#29（S13）：portFilter 键控过滤取代 portOpenRef 全局门控——payload.portName 匹配本会话口才收。
-    // 本会话口 = activeSession.port；无 key（旧数据/单口）→ 收（三态过滤兜底）；不匹配（他口数据）→ 滤
-    if (!matchesPort(payload.portName, settings.port || null)) return;
-    const fmt = tsFormatRef.current;
-    // string 容错保留——IPC 载荷运行时无编译期兜底（#22.5 兜错配，生产静默不崩）
-    const text = typeof payload === "string" ? payload : payload.text;
-    // E5.8#30.19a：write 时同时算 ASCII 与 HEX 双形态（形态选择移到渲染时 renderLine 做）——
-    // 单栏 receiveMode 选形态 / 双栏 ASCII 栏 + HEX 栏各取所需，一条数据双栏都对齐
-    const prefix = fmt !== "无" ? `${formatTimestamp(fmt)} -> ` : "";
-    ringBuffer.current.write({
-      text: `${prefix}${text}`,
-      hex: `${prefix}${toHexDisplay(text)}`,
-      type: "received",
+  // D1：数据走唯一解码头（拼行/解码/HEX 都在 serialInbound）；视图只显示 rx——
+  // tx 的 sent 行仍由发送路径本地回显（onEcho）负责，避免双显。
+  useEffect(() => {
+    ensureSerialInboundSubscribed();
+    return subscribeSerialInbound((line) => {
+      if (line.dir !== "rx") return;
+      // C1：用当前 tab 的 session ID 判断——per-tab 绑定，非全局 activeSession
+      if (!sessionIdRef.current) return;
+      // E5.8#29（S13）：portFilter 键控过滤——本会话口匹配才收（他口数据滤掉）
+      if (!matchesPort(line.portName, settings.port || null)) return;
+      const fmt = tsFormatRef.current;
+      // E5.8#30.19a：ASCII 与 HEX 双形态一次算好（HEX 来自原始字节，GBK/二进制不失真）
+      const prefix = fmt !== "无" ? `${formatTimestamp(fmt)} -> ` : "";
+      ringBuffer.current.write({
+        text: `${prefix}${line.text}`,
+        hex: `${prefix}${line.hex}`,
+        type: "received",
+      });
     });
-  });
+  }, [settings.port, ringBuffer]);
 
   // E3j #78：缓存最后一次连接状态——断开时 port 已关、getStatus 拿不到信息
   const lastPortInfoRef = useRef<{ portName: string; baudRate: number } | null>(null);

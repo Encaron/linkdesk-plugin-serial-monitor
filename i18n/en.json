@@ -44,6 +44,7 @@
   "发送后清空": "Clear After Send",
   "接收模式": "Receive Mode",
   "接收编码": "Receive Encoding",
+  "自动": "Auto",
   "发送模式": "Send Mode",
   "发送编码": "Send Encoding",
   "打开串口": "Open",
@@ -198,5 +199,6 @@
   "{ quickSendName, sessionId? }": "{ quickSendName, sessionId? }",
   "{ portName?, baudRate?, dataBits?, stopBits?, parity?, encoding?, sessionId? }": "{ portName?, baudRate?, dataBits?, stopBits?, parity?, encoding?, sessionId? }",
   "{ coding: UTF-8|GB2312|Shift-JIS|Latin-1, sessionId? }": "{ coding: UTF-8|GB2312|Shift-JIS|Latin-1, sessionId? }",
-  "text | hex": "text | hex"
+  "text | hex": "text | hex",
+  "把接收区当前内容导出为 .txt 日志文件（弹保存对话框）。无视图时用 serial-monitor.readSince（entry/R0）取接收日志。": "Exports the current receive area as a .txt file (save dialog). Without a view, use serial-monitor.readSince (entry/R0) to read the receive log."
 }

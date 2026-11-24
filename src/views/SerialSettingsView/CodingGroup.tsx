@@ -30,7 +30,11 @@ export function CodingGroup({ api, session }: CodingGroupProps) {
         />
       </FormRow>
       <FormRow label={t("接收编码")}>
-        {mkSelect("receiveCoding", [...SERIAL_CODINGS])}
+        {mkSelect("receiveCoding", [
+          ...SERIAL_CODINGS.map((c) => ({ value: c, label: c })),
+          // D2：自动档只在接收侧（发送没有「自动编码」语义）；value 用 ASCII 哨兵，label 走 i18n
+          { value: "auto", label: t("自动") },
+        ])}
       </FormRow>
       <FormRow label={t("发送模式")}>
         <SelectBox

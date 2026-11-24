@@ -126,15 +126,15 @@ function resetWorld(): void {
 beforeEach(resetWorld);
 
 describe("命令注册面", () => {
-  it("21 条插件级命令全部注册（九条动作/读数 ＋ 两条寻址读 ＋ 六条会话态开关 ＋ 05 案四条 reopen/mark/query/reset）", () => {
+  it("20 条插件级命令全部注册（T9 起 quickSendEdit 归视图，不在入口）", () => {
     // ⚠️ 声明面的 `description` / `params` 覆盖**不在这里断言**：本仓 tsconfig 不带 node 类型，
     //    读 `plugin.json` 会引入 `node:fs` / `process` 的类型错。那条判据的机械尺子是
     //    壳仓 `scripts/audit-plugin-commands.mjs`（AI#28）——跨仓验收时跑它，别在本文件写第二把。
-    expect(registerSerialCommands()).toBe(21);
+    expect(registerSerialCommands()).toBe(20);
     for (const id of [
       "serial-monitor.openPort", "serial-monitor.closePort", "serial-monitor.closeSession",
       "serial-monitor.setSendCoding", "serial-monitor.send",
-      "serial-monitor.quickSendEdit", "serial-monitor.quickSendDelete",
+      "serial-monitor.quickSendDelete",
       "serial-monitor.readSince", "serial-monitor.receiveStatus",
       "serial-monitor.listPorts", "serial-monitor.listSessions",
       "serial-monitor.toggleSendMode", "serial-monitor.toggleEcho", "serial-monitor.toggleLineNumbers",
@@ -365,9 +365,8 @@ describe("发送编码 / 发送 / 快捷发送", () => {
     expect(getSessionById(s.id)?.quickSends).toEqual({ PING: "ping" });
   });
 
-  it("quickSendEdit 无视图时给可读报错（编辑框是视图态），不是 null 解引用炸栈", async () => {
-    await expect(handlers.get("serial-monitor.quickSendEdit")!({ quickSendName: "AT" }))
-      .rejects.toThrow(/需要打开该会话的串口标签页/);
+  it("quickSendEdit 归视图（T9 收敛）——入口不再注册；无视图由壳回 EVIEWREQUIRED", () => {
+    expect(handlers.has("serial-monitor.quickSendEdit")).toBe(false);
   });
 });
 
