@@ -1,33 +1,40 @@
 {
   "version": "1",
-  "updatedAt": "2026-11-24T21:58:48.956Z",
+  "updatedAt": "2026-11-25T05:51:58.123Z",
   "plugins": [
     {
       "id": "serial-monitor",
       "name": "串口监视器",
-      "version": "1.0.43",
+      "version": "1.0.46",
       "description": "串口数据监视器——接收区（CM6）+ 发送栏（Monaco）+ 侧栏设置。LinkDesk 第一个视图插件，通用容器基础设施在此验证。不绑定任何特定用途。",
       "author": {
         "name": "Encaron"
       },
-      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.43/resources/icon-bar.svg",
+      "icon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.46/resources/icon-bar.svg",
       "iconSource": "url",
-      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.43/resources/icon.svg",
+      "marketIcon": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.46/resources/icon.svg",
       "marketIconSource": "url",
       "minAppVersion": "0.2.65",
       "category": "hardware",
       "categories": [
         "serial"
       ],
-      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.43/README.md",
+      "readmeUrl": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.46/README.md",
       "readmeLocales": {
-        "zh": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.43/README.md",
-        "en": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.43/docs/readme/en.md"
+        "zh": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.46/README.md",
+        "en": "https://raw.githubusercontent.com/Encaron/linkdesk-plugin-serial-monitor/v1.0.46/docs/readme/en.md"
       },
-      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.43/serial-monitor.linkdesk-plugin",
-      "size": 183924,
-      "publishedAt": "2026-11-24T21:58:48.956Z",
+      "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.46/serial-monitor.linkdesk-plugin",
+      "size": 186403,
+      "publishedAt": "2026-11-25T05:51:58.123Z",
       "versions": [
+        {
+          "version": "1.0.46",
+          "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.46/serial-monitor.linkdesk-plugin",
+          "publishedAt": "2026-11-25T05:51:58.123Z",
+          "changelog": "- **拔插后状态可信（❶/❹/❺）**：`open` 改为「壳句柄账 ∩ 设备在场」唯一收口（`authoritativeOpenState`）——设备不在时不再继承旧缓存报 `open:true`；`listPorts/listSessions/receiveStatus` 与 open 回执同源。端口归属唯一：`listSessions` 增 `portOwnerSessionId`，同口多绑时只有属主报 `open:true`。`stale` 改报「绑着但设备不在」。\n- **openPort 失败零副作用（❷）**：先验证/试开，成功后才建会话、写绑定与设置；失败保留**原**绑定（`reopen` 同参恢复锚点）。\n- **closePort 按 requestedSessionId 作用（❸）**：点名会话不是属主 ⇒ `EBADARGS` 拒绝（⛔ 作用到别人的口）；回执语义唯一（`closed:true` 或 `closed:false + reason:\"already-closed\"`）。\n- **paused 恒布尔（❻）**：`receiveStatus.state.paused` / `listSessions.paused` 没挂视图时为 `false`（⛔ 漂成 null）。",
+          "sha256": "9305ad49115821568b9c841407703d97b13d26d0a887953b2c3c0f1617bb734c"
+        },
         {
           "version": "1.0.43",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.43/serial-monitor.linkdesk-plugin",
@@ -56,8 +63,7 @@
         {
           "version": "1.0.39",
           "downloadUrl": "https://github.com/Encaron/linkdesk-plugin-serial-monitor/releases/download/v1.0.39/serial-monitor.linkdesk-plugin",
-          "publishedAt": "2026-11-23T13:51:46.960Z",
-          "changelog": "- 圆角改吃宿主 `--radius-*`（零视觉）"
+          "publishedAt": "2026-11-23T13:51:46.960Z"
         },
         {
           "version": "1.0.38",
