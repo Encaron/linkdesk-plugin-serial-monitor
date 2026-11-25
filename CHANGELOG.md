@@ -1,5 +1,22 @@
 # 更新日志
 
+## v1.0.46（2026-11-25）
+
+- **拔插后状态可信（❶/❹/❺）**：`open` 改为「壳句柄账 ∩ 设备在场」唯一收口（`authoritativeOpenState`）——设备不在时不再继承旧缓存报 `open:true`；`listPorts/listSessions/receiveStatus` 与 open 回执同源。端口归属唯一：`listSessions` 增 `portOwnerSessionId`，同口多绑时只有属主报 `open:true`。`stale` 改报「绑着但设备不在」。
+- **openPort 失败零副作用（❷）**：先验证/试开，成功后才建会话、写绑定与设置；失败保留**原**绑定（`reopen` 同参恢复锚点）。
+- **closePort 按 requestedSessionId 作用（❸）**：点名会话不是属主 ⇒ `EBADARGS` 拒绝（⛔ 作用到别人的口）；回执语义唯一（`closed:true` 或 `closed:false + reason:"already-closed"`）。
+- **paused 恒布尔（❻）**：`receiveStatus.state.paused` / `listSessions.paused` 没挂视图时为 `false`（⛔ 漂成 null）。
+
+## v1.0.45（2026-11-25）
+
+- **跨桥错误信封修正**：预期内业务错误由 `throw` 改为 **`return`** `{isPluginError:true,code,message,hint?,details?}`——插件 handler 经 contextBridge 代理，异常跨桥只保留 `message`，`code`/`hint` 会被丢掉（实测 `openPort {"baudRate":-1}` 到门外仍是 `EUNKNOWN`）。返回值走结构化克隆，属性不丢。
+- 覆盖 `openPort` 参数归一/无可用端口/设备拒开/sessionId 未命中、`reopen` 被拒、`readSince` 取法互斥与等待期设备消失、`query`/`reset` 的预期失败；`throw` 只留给真正的意外（编程错误，归 `EUNKNOWN` 合理）。
+
+## v1.0.44（2026-11-25）
+
+- **错误码颗粒度**：插件业务错误改走 SDK `pluginError` 结构化信封——无可用端口 / 点名端口不存在 ⇒ `ENOPORT`；设备打不开（占用/掉线/权限）⇒ `EDEVICE`；参数非法（`baudRate`/帧格式/`sessionId`）⇒ `EBADARGS`；同口并发 `query` 仍是 `EBUSY`。每条带 `hint`（下一步）与 `details`（`portName`/`sessionId` 等），门外不再拿到笼统 `ESHELLERROR`。码表集中 `src/services/serialErrors.ts`（`SERIAL_ERROR_CODES`）。
+- **命令声明补齐**：`copy`/`selectAll`/`clear`/`clearSend`/`exportLog`/`quickSendFill`/`quickSendEdit` 补 `returns`（与真实回执同形），并为 10 条命令补可执行 `example`；视图命令改为返回真实回执对象（复制/选中/清空字符数、导出字节数等）。
+
 ## v1.0.43（2026-11-25）
 
 - AI 门外契约补齐：命令声明补 `risk`/`activation`/`returns`/`example`（`query` 另加 `async`）。

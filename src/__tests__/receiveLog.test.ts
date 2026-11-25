@@ -295,7 +295,7 @@ describe("命令面 receiveStatus：水位读数", () => {
     // 05 案 A-1/A-2：state 随行 + 每口时点（本替身无 listPorts ⇒ devicePresent 如实 null，不猜）
     expect(ports.find((p) => p.portName === "COM3")).toMatchObject({
       devicePresent: null, lastDataAt: expect.any(Number), idleMs: expect.any(Number),
-      state: { paused: null, portOpen: true, devicePresent: null },
+      state: { paused: false, portOpen: true, devicePresent: null },
     });
   });
 
@@ -365,9 +365,9 @@ describe("05 案 B-1：缺省不再回放历史 ＋ tail ＋ 服务端过滤", (
   it("取法互斥 ⇒ EBADARGS；afterMark 未知 ⇒ ENOMARK（03 E12/E18）", async () => {
     emitData("COM3", "x");
     const conflict = await pull({ since: 0, tail: 5 });
-    expect(conflict).toMatchObject({ ok: false, code: "EBADARGS", reason: "mode-conflict" });
+    expect(conflict).toMatchObject({ isPluginError: true, code: "EBADARGS", details: { reason: "mode-conflict" } });
     const nomark = await pull({ afterMark: "no-such-mark" });
-    expect(nomark).toMatchObject({ ok: false, code: "ENOMARK" });
+    expect(nomark).toMatchObject({ isPluginError: true, code: "ENOMARK" });
   });
 });
 

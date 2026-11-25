@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@linkdesk/plugin-sdk/schemas/plugin.schema.json",
   "pluginId": "serial-monitor",
   "name": "串口监视器",
-  "version": "1.0.43",
+  "version": "1.0.46",
   "category": "hardware",
   "categories": [
     "serial"
@@ -87,7 +87,13 @@
         "id": "serial-monitor.copy",
         "risk": "R1",
         "activation": "view",
-        "returns": [],
+        "returns": [
+          {
+            "name": "copied",
+            "type": "number",
+            "description": "Characters copied to clipboard (0 when there is no selection)"
+          }
+        ],
         "example": {},
         "title": "复制",
         "category": "串口监视器",
@@ -98,7 +104,13 @@
         "id": "serial-monitor.selectAll",
         "risk": "R1",
         "activation": "view",
-        "returns": [],
+        "returns": [
+          {
+            "name": "selected",
+            "type": "number",
+            "description": "Characters selected (0 when there is no view)"
+          }
+        ],
         "example": {},
         "title": "全选",
         "category": "串口监视器",
@@ -109,7 +121,13 @@
         "id": "serial-monitor.clear",
         "risk": "R1",
         "activation": "view",
-        "returns": [],
+        "returns": [
+          {
+            "name": "cleared",
+            "type": "number",
+            "description": "Characters removed from the receive pane"
+          }
+        ],
         "example": {},
         "title": "清空接收区",
         "category": "串口监视器",
@@ -120,7 +138,13 @@
         "id": "serial-monitor.clearSend",
         "risk": "R1",
         "activation": "view",
-        "returns": [],
+        "returns": [
+          {
+            "name": "cleared",
+            "type": "boolean",
+            "description": "True when the send box was emptied"
+          }
+        ],
         "example": {},
         "title": "清空发送区",
         "category": "串口监视器",
@@ -182,7 +206,24 @@
         "id": "serial-monitor.exportLog",
         "risk": "R2",
         "activation": "view",
-        "returns": [],
+        "returns": [
+          {
+            "name": "exported",
+            "type": "boolean",
+            "description": "True when the log file was written"
+          },
+          {
+            "name": "bytes",
+            "type": "number",
+            "description": "Characters written (0 when not exported)"
+          },
+          {
+            "name": "reason",
+            "type": "string",
+            "optional": true,
+            "description": "Why nothing was written: cancelled | no-view"
+          }
+        ],
         "example": {},
         "title": "导出日志",
         "category": "串口监视器",
@@ -499,8 +540,21 @@
         "id": "serial-monitor.quickSendFill",
         "risk": "R1",
         "activation": "view",
-        "returns": [],
-        "example": {},
+        "returns": [
+          {
+            "name": "filled",
+            "type": "boolean",
+            "description": "True when the send box was filled"
+          },
+          {
+            "name": "quickSendName",
+            "type": "string|null",
+            "description": "Quick-send entry used (null when none was given)"
+          }
+        ],
+        "example": {
+          "quickSendName": "AT"
+        },
         "title": "回填到发送区",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -517,8 +571,16 @@
         "id": "serial-monitor.quickSendEdit",
         "risk": "R1",
         "activation": "view",
-        "returns": [],
-        "example": {},
+        "returns": [
+          {
+            "name": "editing",
+            "type": "string|null",
+            "description": "Quick-send entry now being edited (null when none was given)"
+          }
+        ],
+        "example": {
+          "quickSendName": "AT"
+        },
         "title": "编辑",
         "category": "串口监视器",
         "when": "activeEditor == 'serial-monitor'",
@@ -652,13 +714,13 @@
           {
             "name": "closed",
             "type": "boolean",
-            "description": "True when the port was closed by this call"
+            "description": "True when this call closed the port"
           },
           {
-            "name": "alreadyClosed",
-            "type": "boolean",
+            "name": "reason",
+            "type": "string",
             "optional": true,
-            "description": "Present when it was already closed"
+            "description": "Why nothing was closed: already-closed"
           },
           {
             "name": "portName",
@@ -669,12 +731,6 @@
             "name": "sessionId",
             "type": "string|null",
             "description": "Owner session of that port (null when no session is bound)"
-          },
-          {
-            "name": "requestedSessionId",
-            "type": "string",
-            "optional": true,
-            "description": "Echo of the requested sessionId when it did not own the port"
           }
         ],
         "example": {
@@ -903,7 +959,7 @@
             "name": "state",
             "type": "object",
             "optional": true,
-            "description": "Port state {paused, portOpen, devicePresent}"
+            "description": "Port state {paused:boolean, portOpen, devicePresent}"
           },
           {
             "name": "scanned",
@@ -1030,7 +1086,7 @@
           {
             "name": "ports",
             "type": "array",
-            "description": "Per-port status entries"
+            "description": "Per-port status entries [{portName,count,open,devicePresent,lastDataAt,idleMs,state:{paused:boolean,portOpen,devicePresent}}]"
           }
         ],
         "example": {},
@@ -1062,7 +1118,7 @@
           {
             "name": "sessions",
             "type": "array",
-            "description": "Session entries (id/name/port/open/devicePresent/stale/viewMounted/paused/settings)"
+            "description": "Session entries (id/name/port/portOwnerSessionId/open/devicePresent/stale/viewMounted/paused)"
           }
         ],
         "example": {},

@@ -28,31 +28,35 @@ export function useViewCommands() {
 
     reg("serial-monitor.copy", async () => {
       const view = getActiveCmd()!.cmView.current;
-      if (!view) return;
+      if (!view) return { copied: 0 };
       view.focus();
       const sel = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to);
       if (sel) navigator.clipboard.writeText(sel);
+      return { copied: sel.length };
     }, { title: t("复制"), category: cat });
     reg("serial-monitor.selectAll", async () => {
       const view = getActiveCmd()!.cmView.current;
-      if (!view) return;
+      if (!view) return { selected: 0 };
       view.focus();
       view.dispatch({ selection: { anchor: 0, head: view.state.doc.length } });
+      return { selected: view.state.doc.length };
     }, { title: t("全选"), category: cat });
     reg("serial-monitor.clear", async () => {
       const view = getActiveCmd()!.cmView.current;
-      if (view) {
-        view.dispatch({
-          changes: { from: 0, to: view.state.doc.length },
-          effects: clearAllDecos.of(undefined),
-        });
-      }
+      if (!view) return { cleared: 0 };
+      const cleared = view.state.doc.length;
+      view.dispatch({
+        changes: { from: 0, to: cleared },
+        effects: clearAllDecos.of(undefined),
+      });
+      return { cleared };
     }, { title: t("清空接收区"), category: cat });
     reg("serial-monitor.quickSendFill", async (...args) => {
       const ctx = args[0] as { quickSendName?: string } | undefined;
       if (ctx?.quickSendName) {
         getActiveCmd()!.setSendValue(getActiveCmd()!.quickSends[ctx.quickSendName] ?? "");
       }
+      return { filled: Boolean(ctx?.quickSendName), quickSendName: ctx?.quickSendName ?? null };
     }, { title: t("回填到发送区"), category: cat });
     reg("serial-monitor.quickSendEdit", async (...args) => {
       const ctx = args[0] as { quickSendName?: string } | undefined;
@@ -63,13 +67,15 @@ export function useViewCommands() {
         getActiveCmd()!.setQsContent(getActiveCmd()!.quickSends[key] ?? "");
         getActiveCmd()!.setQsAdding(true);
       }
+      return { editing: ctx?.quickSendName ?? null };
     }, { title: t("编辑"), category: cat });
     reg("serial-monitor.clearSend", async () => {
       getActiveCmd()!.setSendValue("");
+      return { cleared: true };
     }, { title: t("清空发送区"), category: cat });
     reg("serial-monitor.exportLog", async () => {
       const view = getActiveCmd()!.cmView.current;
-      if (!view) return;
+      if (!view) return { exported: false, bytes: 0, reason: "no-view" };
       const text = view.state.doc.toString();
       const filename = `serial-log-${Date.now()}.txt`;
       try {
@@ -77,12 +83,14 @@ export function useViewCommands() {
           suggestedName: filename,
           types: [{ description: "Text", accept: { "text/plain": [".txt"] } }],
         });
-        if (!handle) throw new Error("File System Access API 不可用");
+        if (!handle) return { exported: false, bytes: 0, reason: "cancelled" };
         const writable = await handle.createWritable();
         await writable.write(text);
         await writable.close();
+        return { exported: true, bytes: text.length };
       } catch {
-        // 用户取消保存——静默
+        // 用户取消保存 / 保存 API 不可用——如实回执，不假装写过
+        return { exported: false, bytes: 0, reason: "cancelled" };
       }
     }, { title: t("导出日志"), category: cat });
   }, [t]);

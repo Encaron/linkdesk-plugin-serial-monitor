@@ -50,6 +50,8 @@ const confirmMock = vi.fn(async () => true);
 let portsReply: Array<{ name: string; description: string }> = [];
 /** 非空 ⇒ 假件的 `listPorts` 抛这个错（「问不出来」与「一个口都没有」是两件事，得分别造得出来） */
 let portsFail: string | null = null;
+/** 非空 ⇒ 假件的 `openPort` 抛这个错（设备/驱动层拒绝的模拟） */
+let openFail: string | null = null;
 
 /** 灯写序列——只挑 `:isOpen` 键（会话快照也写 pluginState，别把两种写混成一条序列） */
 function lampSeq(): Array<[string, string, unknown]> {
@@ -85,9 +87,14 @@ beforeAll(() => {
       if (portsFail) throw new Error(portsFail);
       return portsReply;
     },
-    openPort: async (cfg: unknown) => { openArgs.push(cfg); },
+    openPort: async (cfg: unknown) => {
+      if (openFail) throw new Error(openFail);
+      openArgs.push(cfg);
+    },
     closePort: async () => {},
-    getStatus: async (port?: string) => (port ? { portName: port, baudRate: 115200, isOpen: true } : []),
+    getStatus: async (port?: string) => (port
+      ? { portName: port, baudRate: 115200, isOpen: true }
+      : [...getOpenPorts()].map((p) => ({ portName: p, baudRate: 115200, isOpen: true }))),
     setDtr: vi.fn(async () => {}),
     setRts: vi.fn(async () => {}),
     sendText: async (...a: unknown[]) => { sendTextCalls.push(a); },
@@ -118,6 +125,7 @@ function resetWorld(): void {
   closeBySourceIdCalls = [];
   portsReply = [];
   portsFail = null;
+  openFail = null;
   confirmMock.mockReset();
   confirmMock.mockImplementation(async () => true);
   (window as unknown as { __ldkConfigStore: Map<string, unknown> }).__ldkConfigStore.clear();
@@ -234,7 +242,65 @@ describe("AI#23 判据①：打开端口——三处一起动（与手点同链�
 
   it("一个口都没有时如实报错（本机 SerialPort.list() 就是空数组）——不是静默无事发生", async () => {
     portsReply = [];
-    await expect(handlers.get("serial-monitor.openPort")!({})).rejects.toThrow(/没有可用串口/);
+    const res = await handlers.get("serial-monitor.openPort")!({}) as { isPluginError?: boolean; code?: string; message?: string };
+    expect(res.isPluginError).toBe(true);
+    expect(res.code).toBe("ENOPORT");
+    expect(res.message).toMatch(/没有可用串口/);
+  });
+
+  it("无设备 openPort ⇒ ENOPORT ＋ hint（返回式信封，⛔ throw/ESHELLERROR）", async () => {
+    portsReply = [];
+    const res = await handlers.get("serial-monitor.openPort")!({}) as { isPluginError?: boolean; code?: string; hint?: string };
+    expect(res.isPluginError).toBe(true);
+    expect(res.code).toBe("ENOPORT");
+    expect(res.hint).toMatch(/listPorts/);
+  });
+
+  it("坏 baudRate ⇒ EBADARGS ＋ details（入参先归一判，不落到驱动层）", async () => {
+    portsReply = [{ name: "COM3", description: "USB-SERIAL" }];
+    const res = await handlers.get("serial-monitor.openPort")!({ baudRate: -1 }) as {
+      isPluginError?: boolean; code?: string; details?: { baudRate?: number };
+    };
+    expect(res.isPluginError).toBe(true);
+    expect(res.code).toBe("EBADARGS");
+    expect(res.details?.baudRate).toBe(-1);
+  });
+
+  it("设备打开被拒 ⇒ EDEVICE ＋ details.portName ＋ hint（不再是壳兜底码）", async () => {
+    portsReply = [{ name: "COM3", description: "USB-SERIAL" }];
+    openFail = "Access denied";
+    const res = await handlers.get("serial-monitor.openPort")!({ portName: "COM3" }) as {
+      isPluginError?: boolean; code?: string; message?: string; hint?: string; details?: { portName?: string };
+    };
+    expect(res.isPluginError).toBe(true);
+    expect(res.code).toBe("EDEVICE");
+    expect(res.message).toMatch(/COM3/);
+    expect(res.details?.portName).toBe("COM3");
+    expect(res.hint).toMatch(/listPorts/);
+  });
+
+  it("设备拒开后绑定零副作用：保留**原**绑定（reopen 锚点），⛔ 改成失败的新口", async () => {
+    portsReply = [{ name: "COM3", description: "USB-SERIAL" }];
+    const s = createSessionModule("会话");
+    updateSessionById(s.id, { port: "COM3" });
+    openFail = "File not found";
+    const res = await handlers.get("serial-monitor.openPort")!({ portName: "COM9", sessionId: s.id }) as {
+      isPluginError?: boolean; code?: string;
+    };
+    expect(res.code).toBe("EDEVICE");
+    // ❷：失败路径零副作用——原绑定原样（插回 COM3 后 reopen 仍能同参恢复）
+    expect(getSessionById(s.id)?.port).toBe("COM3");
+    expect(getOpenPorts().has("COM9")).toBe(false);
+  });
+
+  it("sessionId 不存在 ⇒ EBADARGS ＋ details.sessionId（点名没命中如实报，不新建）", async () => {
+    portsReply = [{ name: "COM3", description: "USB-SERIAL" }];
+    const res = await handlers.get("serial-monitor.openPort")!({ sessionId: "s-nope" }) as {
+      isPluginError?: boolean; code?: string; details?: { sessionId?: string };
+    };
+    expect(res.isPluginError).toBe(true);
+    expect(res.code).toBe("EBADARGS");
+    expect(res.details?.sessionId).toBe("s-nope");
   });
 
   it("会话没绑口时取列表第一个可用口（与界面「打开」同判据）", async () => {
@@ -276,9 +342,9 @@ describe("关闭端口 / 关闭会话", () => {
     expect(getOpenPorts().has("COM3")).toBe(false);
   });
 
-  it("关没开着的口：如实回 alreadyClosed，不假装关过", async () => {
-    const res = await handlers.get("serial-monitor.closePort")!({ portName: "COM3" }) as { closed: boolean; alreadyClosed?: boolean };
-    expect(res).toMatchObject({ closed: false, alreadyClosed: true });
+  it("关没开着的口：如实回 closed:false ＋ reason:already-closed（语义唯一，⛔ 两个布尔自相矛盾）", async () => {
+    const res = await handlers.get("serial-monitor.closePort")!({ portName: "COM3" }) as { closed: boolean; reason?: string };
+    expect(res).toMatchObject({ closed: false, reason: "already-closed" });
   });
 
   it("关会话：先断口 → 关标签页 → 删会话（与侧栏 ✕ 同一顺序）", async () => {
@@ -297,6 +363,7 @@ describe("关闭端口 / 关闭会话", () => {
 
   it("「关闭时提示」开着且用户不点头 ⇒ 如实回 denied，会话/标签页/口一处不动", async () => {
     const open = await handlers.get("serial-monitor.openPort")!({ portName: "COM3", baudRate: 115200 }) as { sessionId: string };
+    portsReply = [{ name: "COM3", description: "USB-SERIAL" }]; // 设备在场（权威态要按硬件面验证 open）
     confirmMock.mockResolvedValue(false); // 配置缺省 = 提示开
 
     const res = await handlers.get("serial-monitor.closeSession")!({ sessionId: open.sessionId }) as { closed: boolean; denied?: boolean };
@@ -320,7 +387,12 @@ describe("关闭端口 / 关闭会话", () => {
   it("找不到会话时报可读错（带上现有会话名），不是静默成功", async () => {
     createSessionModule("甲");
     createSessionModule("乙");
-    await expect(handlers.get("serial-monitor.closeSession")!({ sessionId: "s-nope" })).rejects.toThrow(/找不到会话.*甲/s);
+    const res = await handlers.get("serial-monitor.closeSession")!({ sessionId: "s-nope" }) as {
+      isPluginError?: boolean; code?: string; message?: string;
+    };
+    expect(res.isPluginError).toBe(true);
+    expect(res.code).toBe("EBADARGS");
+    expect(res.message).toMatch(/找不到会话.*甲/s);
   });
 });
 
@@ -331,7 +403,12 @@ describe("发送编码 / 发送 / 快捷发送", () => {
     expect(ok.sendCoding).toBe("GB2312");
     expect(getSessionById(s.id)?.sendCoding).toBe("GB2312");
 
-    await expect(handlers.get("serial-monitor.setSendCoding")!({ coding: "Koi8-R", sessionId: s.id })).rejects.toThrow(/不支持的编码/);
+    const bad = await handlers.get("serial-monitor.setSendCoding")!({ coding: "Koi8-R", sessionId: s.id }) as {
+      isPluginError?: boolean; code?: string; message?: string;
+    };
+    expect(bad.isPluginError).toBe(true);
+    expect(bad.code).toBe("EBADARGS");
+    expect(bad.message).toMatch(/不支持的编码/);
     expect(getSessionById(s.id)?.sendCoding).toBe("GB2312"); // 拒了就一点没改
   });
 
@@ -430,6 +507,7 @@ describe("AI#67 会话寻址：listSessions ＋ 六条开关认 sessionId", () =
     updateSessionById(s1.id, { port: "COM3" });
     updateSessionById(s2.id, { port: "COM5", sendMode: "hex", separateSystemLog: false });
     await openPortFromModule({ portName: "COM3", baudRate: 115200 }); // 只有 COM3 真开着
+    portsReply = [{ name: "COM3", description: "USB-SERIAL" }, { name: "COM5", description: "USB-SERIAL" }];
     setActiveSessionId(s2.id);
 
     const res = await handlers.get("serial-monitor.listSessions")!() as {
@@ -445,6 +523,23 @@ describe("AI#67 会话寻址：listSessions ＋ 六条开关认 sessionId", () =
     expect(res.sessions[1]).toMatchObject({ name: "会话2", portName: "COM5", open: false, sendMode: "hex", separateSystemLog: false });
   });
 
+  it("❺ 两会话同绑一口：只有属主报 open:true，另一条如实「未持有此口」＋ portOwnerSessionId", async () => {
+    const s1 = createSessionModule("会话1", "s-1");
+    const s2 = createSessionModule("会话2", "s-2");
+    updateSessionById(s1.id, { port: "COM3" });
+    updateSessionById(s2.id, { port: "COM3" }); // 脏状态：两条都绑了同一口
+    await openPortFromModule({ portName: "COM3", baudRate: 115200 });
+    portsReply = [{ name: "COM3", description: "USB-SERIAL" }];
+
+    const res = await handlers.get("serial-monitor.listSessions")!() as {
+      sessions: Array<Record<string, unknown>>;
+    };
+    const [a, b] = res.sessions;
+    expect(a).toMatchObject({ sessionId: "s-1", open: true, portOwnerSessionId: "s-1" });
+    expect(b).toMatchObject({ sessionId: "s-2", open: false, portOwnerSessionId: "s-1" });
+    expect((res.sessions as Array<Record<string, unknown>>).filter((x) => x.open === true)).toHaveLength(1);
+  });
+
   it("视图没挂载 ⇒ viewMounted:false ＋ paused:null（⛔ 不报 false 假装问过）", async () => {
     createSessionModule("会话1", "s-1");
     mountView("s-1", true);
@@ -456,8 +551,8 @@ describe("AI#67 会话寻址：listSessions ＋ 六条开关认 sessionId", () =
     expect(res.sessions[0]).toMatchObject({ viewMounted: true, paused: true }); // 挂载过 —— 读的是视图态快照
     _cmdMap.clear();
     const bare = await handlers.get("serial-monitor.listSessions")!() as typeof res;
-    // 「标签页没开」与「暂停态是假的」不是一回事——没挂载就如实说不知道
-    expect(bare.sessions[0]).toMatchObject({ viewMounted: false, paused: null });
+    // ❻：paused 恒布尔——没有视图 = 没有显示可冻结 ⇒ false（⛔ 漂成 null）
+    expect(bare.sessions[0]).toMatchObject({ viewMounted: false, paused: false });
   });
 
   it("⛔ 点名哪条就改哪条：给了 sessionId 的开关不落到活跃会话上（外部 AI 那条误判的正面判据）", async () => {
@@ -561,14 +656,16 @@ describe("AI#68 端口面的两个谎：猜靶子（openPort）与认错人（cl
   it("🔴 多会话下只给 portName ⇒ 拒（⛔ 不当场改绑活跃会话的口——活跃会话随前台标签页变，同一条命令两种结果）", async () => {
     twoSessionsBound();
 
-    await expect(handlers.get("serial-monitor.openPort")!({ portName: "COM9" }))
-      .rejects.toThrow(/多会话下给 portName 必须点名 sessionId/);
-
-    // 修法一次说全：谁在哪条会话上、谁是活跃、去哪个命令要清单
-    await expect(handlers.get("serial-monitor.openPort")!({ portName: "COM9" }))
-      .rejects.toThrow(/会话1\[s-1\]→COM3、会话2\[s-2\]→COM4（活跃）/);
-    await expect(handlers.get("serial-monitor.openPort")!({ portName: "COM9" }))
-      .rejects.toThrow(/serial-monitor\.listSessions/);
+    // 返回式信封（⛔ throw）：一次调用拿全三件事——原因 / 谁在哪 / 去哪个命令要清单
+    const res = await handlers.get("serial-monitor.openPort")!({ portName: "COM9" }) as {
+      isPluginError?: boolean; code?: string; message?: string; hint?: string;
+    };
+    expect(res.isPluginError).toBe(true);
+    expect(res.code).toBe("EBADARGS");
+    expect(res.message).toMatch(/多会话下给 portName 必须点名 sessionId/);
+    expect(res.message).toMatch(/会话1\[s-1\]→COM3、会话2\[s-2\]→COM4（活跃）/);
+    expect(res.message).toMatch(/serial-monitor\.listSessions/);
+    expect(res.hint).toMatch(/sessionId/);
 
     // 负控：真的什么都没动（不是「拒了但又改了绑定」）
     expect(getSessions().map((s) => s.port)).toEqual(["COM3", "COM4"]);
@@ -631,15 +728,19 @@ describe("AI#68 端口面的两个谎：猜靶子（openPort）与认错人（cl
     expect(getOpenPorts().has("COM3")).toBe(false);
   });
 
-  it("点名了非属主 ⇒ 两条都报（属主 ＋ requestedSessionId），⛔ 不让调用方以为点到了", async () => {
+  it("点名了非属主 ⇒ 按 requestedSessionId 拒（⛔ 作用到别人的口），口保持开着", async () => {
     twoSessionsBound();
     await openPortFromModule({ portName: "COM3", baudRate: 115200 });
 
     const res = await handlers.get("serial-monitor.closePort")!({ portName: "COM3", sessionId: "s-2" }) as {
-      sessionId: string | null; requestedSessionId?: string;
+      isPluginError?: boolean; code?: string; message?: string; details?: { requestedSessionId?: string; portOwnerSessionId?: string };
     };
 
-    expect(res).toMatchObject({ sessionId: "s-1", requestedSessionId: "s-2" });
+    // ❸：点名会话就只认它是否为属主；回执用结构化错误，⛔ 不再「作用在 s-1 却回 requestedSessionId:s-2」
+    expect(res.isPluginError).toBe(true);
+    expect(res.code).toBe("EBADARGS");
+    expect(res.details).toMatchObject({ requestedSessionId: "s-2", portOwnerSessionId: "s-1" });
+    expect(getOpenPorts().has("COM3")).toBe(true); // 零副作用：别人的口没被关
   });
 
   it("口属主查不到（口开着却没有会话绑它）⇒ 如实报 null，⛔ 不编一个最近的会话", async () => {
